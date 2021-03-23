@@ -226,7 +226,9 @@ pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$spe
 AtlasPPM<-pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999)
 AtlasPPM
 ```
+
 ### tuberculum interglenoideum measurement only
+
 ```{r}
 Atlas_wofossil_Tub_only <- as.data.frame(Atlas_wofossil[c(1,8:9)]) 
 Atlas_wofossil_Tub_only <- na.omit(Atlas_wofossil_Tub_only) # remove rows with N/A's
