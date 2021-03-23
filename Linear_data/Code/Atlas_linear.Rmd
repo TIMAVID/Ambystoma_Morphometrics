@@ -1,0 +1,88 @@
+---
+title: "Atlas"
+author: "David Ledesma"
+date: "3/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = TRUE,
+	message = TRUE,
+	comment = "##",
+	prompt = FALSE,
+	tidy = TRUE,
+	tidy.opts = list(blank = FALSE, width.cutoff = 75),
+	fig.path = "img/",
+	fig.align = "center"
+)
+```
+
+### Load in data ###
+
+```{r}
+library(curl)
+library(readxl)
+Amb_linear_data <- curl("https://github.com/TIMAVID/Ambystoma/blob/master/Linear_data/Data/Amb_linear_data.xlsx")
+readLines(Amb_linear_data)
+```
+# Tidy data #
+```{r, echo=FALSE}
+library(dplyr)
+
+Atlas <-  Amb_linear_data[c(3, 9:14, 55:56)] #select only relevant atlas measurements
+
+Atlas_wofossil <- dplyr::filter(Atlas, !grepl('TxVP', species)) # remove fossils
+Atlas_wofossil <- Atlas_wofossil %>% dplyr::rename(M1 = 2, M2=3, M3=4,M4=5,M5=6,M6=7) # remame columns for easier manipulation
+
+Atlas_wofossil_noNA <- na.omit(Atlas_wofossil) # remove rows with N/A's
+
+Atlas_wofossil_noNA$species<-as.factor(Atlas_wofossil_noNA$species)
+Atlas_wofossil_noNA$species <- factor(Atlas_wofossil_noNA$species, levels = 
+                                           c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+                                             "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum")) # Reorder species
+```
+### PCA's ###
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

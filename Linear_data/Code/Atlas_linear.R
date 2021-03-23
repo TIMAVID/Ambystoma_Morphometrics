@@ -140,7 +140,7 @@ Atlas_wofossil_noTub_sub %>%
 
 #Check Multivariate normality:FAIL
 Atlas_wofossil_noTub_sub %>%
-  select(,1:6) %>%
+  dplyr::select(,1:6) %>%
   mshapiro_test()
 
 #Identify multicollinearity:FAIL
