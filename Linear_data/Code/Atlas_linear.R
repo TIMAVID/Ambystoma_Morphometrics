@@ -161,11 +161,35 @@ require(vegan)
 adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,method="euclidean") 
 
 #pairwise comparisons between group levels with corrections for multiple testing
-pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=200) #needs more permutation but takes a long time
+pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=50) #needs more permutation but takes a long time
 #or using euclidean distances
 AtlasPPM<-pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999, progress = FALSE)
 AtlasPPM
 
+# tuberculum interglenoideum measurement only
+Atlas_wofossil_Tub_only <- as.data.frame(Atlas_wofossil[c(1,8:9)]) 
+Atlas_wofossil_Tub_only <- na.omit(Atlas_wofossil_Tub_only) # remove rows with N/A's
+Atlas_wofossil_Tub_only$species<-as.factor(Atlas_wofossil_Tub_only$species)
+Atlas_wofossil_Tub_only$species <- factor(Atlas_wofossil_Tub_only$species, levels = 
+                                             c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium")) # Reorder species
+
+
+Atlas_wofossil_Tub_only <- dplyr::filter(Atlas_wofossil_Tub_only, !grepl('A.laterale|A.talpoideum|A.subsalsum|A.ordinarium', species))
+
+
+#Permutational Anova
+perm.anova(Atlas_wofossil_Tub_only$tub_interglen_extension ~ Atlas_wofossil_Tub_only$species, nperm=1000)
+
+#pairwise comparisons between group levels with corrections for multiple testing
+library(rcompanion)
+
+PT <- pairwisePermutationTest(tub_interglen_extension ~   species,
+                             data   = Atlas_wofossil_Tub_only,
+                             method = "fdr")
+PT
+
+pairwise.perm.t.test(Atlas_wofossil_Tub_only$tub_interglen_extension,Atlas_wofossil_Tub_only$species,nperm=999,progress = FALSE)
 
 ### DFA ###
 
