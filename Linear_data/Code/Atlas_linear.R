@@ -144,8 +144,9 @@ Atlas_wofossil_noTub_sub %>%
   mshapiro_test()
 
 #Identify multicollinearity:FAIL
-Atlas_wofossil_noTub_sub %>% cor_test(,1:6)
+Atlas_wofossil_noTub_sub %>% rstatix::cor_test(,1:6)
 
+?cor_test
 # PROBLEM!!:Absence of multicollinearity. The dependent (outcome) variables cannot be too correlated to each other. No correlation should be above r = 0.90 [Tabachnick and Fidell (2012)}.
 cor(Atlas_wofossil_noTub_sub[,1:6])
 
