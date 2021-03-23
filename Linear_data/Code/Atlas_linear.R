@@ -1,6 +1,6 @@
 ## Load in data ##
 library(readxl)
-download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/Linear_data/Amb_linear_data.xlsx?raw=true",   "Amb_linear_data.xlsx")
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/Linear_data/Data/Amb_linear_data.xlsx?raw=true",   "Amb_linear_data.xlsx")
 Amb_linear_data <- read_excel("Amb_linear_data.xlsx")
 
 
@@ -111,8 +111,8 @@ library(rstatix)
 library(car)
 library(broom)
 
-Atlas_wofossil_noTub_sub <- Atlas_wofossil_noTub_sub %>%
-  add_column(id = rownames(Atlas_wofossil_noTub_sub), .after = 8)
+# Atlas_wofossil_noTub_sub <- Atlas_wofossil_noTub_sub %>%
+#   add_column(id = rownames(Atlas_wofossil_noTub_sub), .after = 8)
 
 #Check sample sizes:PASS
 Atlas_wofossil_noTub_sub %>%

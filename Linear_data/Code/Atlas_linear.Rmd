@@ -2,7 +2,9 @@
 title: "Atlas"
 author: "David Ledesma"
 date: "3/22/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -81,6 +83,7 @@ sqrt(1/ncol(Atlas[c(1:7)])) # cutoff for 'important' loadings
 biplot(scores[, 1:2], loadings[, 1:2], cex=0.9)
 
 ggbiplot(Atlas.pca, ellipse=FALSE, groups=Atlas_wofossil_noNA$species)
+
 ```
 
 ## Plot
@@ -158,8 +161,8 @@ library(broom)
 ```{r}
 
 
-Atlas_wofossil_noTub_sub <- Atlas_wofossil_noTub_sub %>%
-  add_column(id = rownames(Atlas_wofossil_noTub_sub), .after = 8)
+# Atlas_wofossil_noTub_sub <- Atlas_wofossil_noTub_sub %>%
+  # add_column(id = rownames(Atlas_wofossil_noTub_sub), .after = 8)
 
 #Check sample sizes:PASS
 Atlas_wofossil_noTub_sub %>%
@@ -316,14 +319,14 @@ varImpPlot(Atlas.rf)
 library(tidyverse)
 library(caret)
 
-# Atlas_wofossil_noTub_sub <- column_to_rownames(Atlas_wofossil_noTub_sub, var = "specimen_num")
+Atlas_wofossil_noTub_sub <- column_to_rownames(Atlas_wofossil_noTub_sub, var = "specimen_num")
 
 #make KNN model using LOOCV to find optimal k
 KNNmodel <- train(
   species ~., data = Atlas_wofossil_noTub_sub, method = "knn",
   trControl = trainControl("LOOCV", number =1),
   preProcess = c("center"), #center the data
-  tuneLength = 6)
+  tuneLength = 15)
 
 plot(KNNmodel) # plot accuracy vs k
 KNNmodel$bestTune # optimal k
