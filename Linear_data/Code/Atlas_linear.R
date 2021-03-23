@@ -163,7 +163,7 @@ adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,meth
 #pairwise comparisons between group levels with corrections for multiple testing
 pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=200) #needs more permutation but takes a long time
 #or using euclidean distances
-AtlasPPM<-pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999)
+AtlasPPM<-pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999, progress = FALSE)
 AtlasPPM
 
 
