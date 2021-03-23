@@ -24,8 +24,8 @@ knitr::opts_chunk$set(
 ```{r}
 library(curl)
 library(readxl)
-Amb_linear_data <- curl("https://github.com/TIMAVID/Ambystoma/blob/master/Linear_data/Data/Amb_linear_data.xlsx")
-readLines(Amb_linear_data)
+Amb_linear_data <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/Linear_data/Data/Amb_linear_data.csv")
+Amb_linear_data <-  read.csv(Amb_linear_data)
 ```
 # Tidy data #
 ```{r, echo=FALSE}
