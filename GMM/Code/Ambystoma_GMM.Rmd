@@ -1,26 +1,55 @@
-## Load in data ##
+---
+title: "Ambystoma_GMM"
+author: "David Ledesma"
+date: "3/23/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = TRUE,
+	message = TRUE,
+	comment = "##",
+	prompt = FALSE,
+	tidy = TRUE,
+	tidy.opts = list(blank = FALSE, width.cutoff = 75),
+	fig.path = "img/",
+	fig.align = "center"
+)
+```
+
+## Load in data
+
+```{r, echo=FALSE}
 download.file(   "https://github.com/TIMAVID/Ambystoma/blob/fe4c0fe3f83265c6aa656946b696096524cdd26d/GMM/Data/GMM_data.RData?raw=true",   "GMM_data.RData")
 load("GMM_data.RData")
+```
 
-library(geomorph)
-
-
+```{r}
 # Generalized procrustes analysis
-
+library(geomorph)
 GPA_landmarks_sub <- gpagen(GMM_data_sub$land)
 
 #Create geomorph data frame
 
 Amb_gdf<-geomorph.data.frame(coords=GPA_landmarks_sub$coords,
                              size=GPA_landmarks_sub$Csize, species=GMM_data_sub$species)
-## PCA ##
+```
+# PCA
+```{r}
 
 Amb_PCA <- gm.prcomp(GPA_landmarks_sub$coords)
 
-?gm.prcomp
 
-### PCA vizualization ###
+
+```
+
+## PCA vizualization
+
+```{r}
 
 PC_scores <- as.data.frame(Amb_PCA$x)
 library(ggplot2)
@@ -44,7 +73,11 @@ p<-p+geom_point(size =5)+theme + xlab(percentage[1]) + ylab(percentage[2]) +scal
 # p + stat_ellipse()
 p
 
+```
+
 ## ANOVA ##
+
+```{r}
 
 # Without size
 Amb_anova <- procD.lm(coords ~ species, 
@@ -52,7 +85,6 @@ Amb_anova <- procD.lm(coords ~ species,
                       RRPP = TRUE, print.progress = FALSE)
 Amb_anova$aov.table
 
-plot(Amb_anova, type = "diagnostics", outliers = TRUE)
 
 # With size
 Amb_anova_size <- procD.lm(coords ~ species*size, 
@@ -60,31 +92,39 @@ Amb_anova_size <- procD.lm(coords ~ species*size,
                            RRPP = TRUE, print.progress = FALSE)
 Amb_anova_size$aov.table
 
-plot(Amb_anova_size, type = "diagnostics", outliers = TRUE)
 
-#Post-hoc comparisons
+```
 
+### Post-hoc comparisons
+
+```{r}
 gp <-  interaction(Amb_gdf$species)
 PW <- pairwise(Amb_anova, groups = gp, covariate = NULL)
 
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = TRUE)
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+```
 
-## Phylogenetic signal ##
+## Phylogenetic signal
 
-# Load in data #
+### Load in data
+```{r}
+
 require(phytools)
 
 download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/Amb_species?raw=true",   "Amb_species.txt")
 
 # Read in tree
 
-tree <- read.newick("Amb_species.txt")  #tree from Williams et al. 2013
+tree <- read.newick("Amb_species.txt") #tree from Williams et al. 2013
 
 par(mar=c(1,1,1,1))
 tree$tip.label<-gsub("^", "A.", tree$tip.label)
 plot(tree)
 
+```
+
+```{r}
 #Subset tree to include only GMM species
 Amb_species<-unique(GMM_data_sub$species)
 tips<-tree$tip.label
@@ -94,24 +134,45 @@ plotTree(tree,ftype="i")
 #Tree did not include A.mavortium so I lumped that species with A.tigrinum
 Amb_gdf$species<-gsub("A.mavortium", "A.tigrinum", Amb_gdf$species, fixed = TRUE)
 Amb_gdf$species<-as.factor(Amb_gdf$species)
+```
 
-#Preformed a group PCA
+### Preformed a group PCA
+
+```{r}
+
 library(Morpho)
 gpca <- groupPCA(Amb_gdf$coords, Amb_gdf$species, rounds=0)
 plot(gpca$groupmeans)
 
-#Performed a Phylogenetic PCA based on group means
-phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = FALSE)
+
+```
+
+### Performed a Phylogenetic PCA based on group means
+
+```{r}
+
+phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree)
 summary(phylo.PCA)
 
 A_species<-attributes(gpca$groupmeans) #access attributes names
 A_species<-(A_species$dimnames[[3]])
-A_species<-as.factor(A_species)
+A_species<- as.factor(A_species)
+```
 
-#Plot phylogenetic PCA
+### Plot phylogenetic PCA
+
+```{r}
+
 plot(phylo.PCA, phylo = TRUE, main = "phylo PCA", col=A_species)
 
-#3D plot of plylogenetic PCA
+
+```
+
+### 3D plot of plylogenetic PCA
+
+```{r}
+
+
 plotdat<-phylo.PCA$x[,1:3]
 colnames(plotdat)<-c("","","")#prevent axis labels
 obj<-phytools::phylomorphospace3d(tree,plotdat, method="dynamic",
@@ -120,26 +181,40 @@ spheres3d(phylo.PCA$x[,1:3], color=palette()[A_species], r=0.01)
 bbox3d(color = c("white"),shininess=15, alpha=0.3,xat=c(10), xlab="x",yat=c(10), ylab="y",zat=c(10), zlab="z")
 text3d((phylo.PCA$x[,1:3]+0.005), texts = substr(A_species,1,6))
 
-#Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
+
+```
+
+### Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
+
+```{r}
 physignal(gpca$groupmeans, tree, print.progress = F)
 
-#Phylogenetic generalized least squares
+```
 
+### Phylogenetic generalized least squares
+
+```{r, warning=F}
 avg_gdf<-geomorph.data.frame(coords=gpca$groupmeans, species=A_species) #make new geomorph dataframe with group mean coords
 
 pgls<-procD.pgls(coords~species, phy=tree, data=avg_gdf, print.progress = F) #Phylogenetic generalized least squares
 pgls$aov.table
+```
 
-#Compare evolutionary rates in different portions of the tree based on brownian motion
+### Compare evolutionary rates in different portions of the tree based on brownian motion
 
-rate.comp<-compare.evol.rates(avg_gdf$coords, tree, gp=avg_gdf$species, method = c("permutation"), iter = 999, print.progress = F)
+```{r, warning=F}
+names(avg_gdf$species)<-avg_gdf$species
+rate.comp<-compare.evol.rates(avg_gdf$coords, tree, gp=avg_gdf$species, print.progress = F)
 
 plot(rate.comp)
 rate.comp$sigma.d.gp
 rate.comp$pairwise.pvalue
 
+```
+
 ## Discriminant Function Analysis ##
 
+```{r}
 library(Morpho)
 
 DFA<-CVA(GPA_landmarks_sub$coords, GMM_data_sub$species, cv = TRUE)
@@ -150,9 +225,13 @@ barplot(DFA$Var[,2]) # Variance explained by the canonical roots
 
 accJack <- table(DFA$groups, DFA$class)
 accJack
-diag(prop.table(accJack, 1))
-sum(accJack[row(accJack) == col(accJack)]) / sum(accJack)
+diag(prop.table(accJack, 1)) #accuracy per species as %
+sum(accJack[row(accJack) == col(accJack)]) / sum(accJack) #overall accuracy
 
+
+```
+
+```{r}
 # Plot first two DF axes #
 
 DFA_cva <- data.frame(DFA$CVscores, species = DFA$groups)
@@ -166,6 +245,9 @@ plot(DFA$CVscores, col=GMM_data_sub$species, pch=as.numeric(GMM_data_sub$species
      ylab=paste("2nd canonical axis", paste(round(DFA$Var[2,2],1),"%")))
 text(DFA$CVscores, as.character(GMM_data_sub$species), col=as.numeric(GMM_data_sub$species), cex=.7)
 
+```
+
+```{r}
 # Plot Mahalahobis distances as dendrogram #
 
 dendroS=hclust(DFA$Dist$GroupdistMaha)
@@ -175,8 +257,12 @@ dendroS=as.dendrogram(dendroS)
 plot(dendroS, main='',sub='', xlab="",
      ylab='Mahalahobis distance')
 
+```
 
-### K Nearest neighbor ###:Non-parametric
+## K Nearest neighbor ###:Non-parametric
+
+```{r}
+
 library(caret)
 Atlas_PC_scores <- data.frame(Amb_PCA$x,species=GMM_data_sub$species)
 
@@ -200,11 +286,13 @@ accKNN
 diag(prop.table(accKNN, 1))
 
 
+```
+
+```{r}
 
 
 
-
-
+```
 
 
 
