@@ -274,6 +274,9 @@ library(caret)
 Atlas_wofossil_noTub_sub <- column_to_rownames(Atlas_wofossil_noTub_sub, var = "specimen_num")
 
 #make KNN model using LOOCV to find optimal k
+
+set.seed(123)
+
 KNNmodel <- train(
   species ~., data = Atlas_wofossil_noTub_sub, method = "knn",
   trControl = trainControl("LOOCV", number =1),
@@ -291,3 +294,27 @@ mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
 accKNN <- table(Atlas_wofossil_noTub_sub$species,predicted.classes)
 accKNN
 diag(prop.table(accKNN, 1))
+
+
+### Model selection (multinominal regression) 
+
+library(glmulti)
+
+library(nnet)
+
+multinom.glmulti <- function(formula, data, ...)
+  multinom(formula, data, ...)
+
+res <- glmulti(species ~ .,level=1, data=Atlas_wofossil_noTub_sub, report = FALSE, plotty = FALSE,fitfunction=multinom.glmulti, method = "h", crit="aic", confsetsize=16)
+
+print(res)
+
+plot(res)
+
+top <- weightable(res)
+top
+
+
+
+
+

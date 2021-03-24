@@ -202,9 +202,3 @@ diag(prop.table(accKNN, 1))
 
 
 
-
-
-
-
-
-
