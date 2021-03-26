@@ -29,7 +29,9 @@ T4 <- dplyr::select(PoAtVerts_wofossil_noNA, contains("b", ignore.case = FALSE),
 T4 <- T4 %>% dplyr::rename(M1b = 1, M2b=2, M3b=3,M4b=4,M5b=5,M6b=6, M7b=7)
 
 T8 <- dplyr::select(PoAtVerts_wofossil_noNA, contains("Cen"), contains("c", ignore.case = FALSE), contains("specimen"), contains("species"))
-T8 <- T8 %>% dplyr::rename(M1c = 3, M2c=4, M3c=5,M4c=6,M5c=7,M6c=8, M7c=9)
+T8 <- T8 %>% dplyr::rename(M1c = 1, M2c=2, M3c=3,M4c=4,M5c=5,M6c=6, M7c=7)
+
+T8_extension <- dplyr::select(PoAtVerts_wofossil_noNA, contains("Cen"), contains("specimen"), contains("species"))
 
 T12<- dplyr::select(PoAtVerts_wofossil_noNA, contains("d", ignore.case = FALSE), contains("specimen"), contains("species"))
 T12 <- T12 %>% dplyr::rename(M1d = 1, M2d=2, M3d=3,M4d=4,M5d=5,M6d=6, M7d=7)
@@ -42,7 +44,7 @@ Sc <- dplyr::select(PoAtVerts_wofossil_noNA, contains("M", ignore.case = FALSE),
 
 T1.pca <- prcomp(T1[c(1:7)], center = TRUE, scale = FALSE) # PCA
 T4.pca <- prcomp(T4[c(1:7)], center = TRUE, scale = FALSE) # PCA
-T8.pca <- prcomp(T8[c(1:9)], center = TRUE, scale = TRUE) # PCA
+T8.pca <- prcomp(T8[c(1:7)], center = TRUE, scale = TRUE) # PCA
 T12.pca <- prcomp(T1[c(1:7)], center = TRUE, scale = FALSE) # PCA
 Sc.pca <- prcomp(Sc[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
@@ -103,7 +105,7 @@ library(randomForest)
 
 T1.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=T1_sub, importance=TRUE,proximity=TRUE)
 T4.rf <- randomForest(species ~ M1b + M2b+ M3b+M4b+M5b+M6b+M7b, data=T4_sub, importance=TRUE,proximity=TRUE)
-T8.rf <- randomForest(species ~ Cen_to_NeuAr+Cen_to_PoZy+ M1c + M2c+ M3c+M4c+M5c+M6c+M7c, data=T8_sub, importance=TRUE,proximity=TRUE)
+T8.rf <- randomForest(species ~ M1c + M2c+ M3c+M4c+M5c+M6c+M7c, data=T8_sub, importance=TRUE,proximity=TRUE)
 T12.rf <- randomForest(species ~ M1d + M2d+ M3d+M4d+M5d+M6d+M7d, data=T12_sub, importance=TRUE,proximity=TRUE)
 Sc.rf <- randomForest(species ~ M14 + M15+ M16+M17+M18+M19+M20, data=Sc_sub, importance=TRUE,proximity=TRUE)
 
@@ -142,7 +144,7 @@ KNNmodel <- train(
 plot(KNNmodel) # plot accuracy vs k
 KNNmodel$bestTune # optimal k
 
-predicted.classes <- KNNmodel %>% predict(T8_sub[,1:9]) # predict class based on KNN model
+predicted.classes <- KNNmodel %>% predict(T8_sub[,1:7]) # predict class based on KNN model
 head(predicted.classes)
 mean(predicted.classes == T8_sub$species) #overall accuracy
 
