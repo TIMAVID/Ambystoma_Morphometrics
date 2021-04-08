@@ -24,25 +24,25 @@ knitr::opts_chunk$set(
 ## Load in data
 
 ```{r, echo=FALSE}
-download.file(   "https://github.com/TIMAVID/Ambystoma/blob/fe4c0fe3f83265c6aa656946b696096524cdd26d/GMM/Data/GMM_data.RData?raw=true",   "GMM_data.RData")
-load("GMM_data.RData")
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/GMM_data_noFossils.RData?raw=true",   "GMM_data_noFossil.RData")
+load("GMM_data_noFossil.RData")
 ```
 
 ```{r}
 # Generalized procrustes analysis
 library(geomorph)
-GPA_landmarks_sub <- gpagen(GMM_data_sub$land)
+GPA_landmarks <- gpagen(GMM_data_noFossil$land)
 
 #Create geomorph data frame
 
-Amb_gdf<-geomorph.data.frame(coords=GPA_landmarks_sub$coords,
-                             size=GPA_landmarks_sub$Csize, species=GMM_data_sub$species)
+Amb_gdf<-geomorph.data.frame(coords=GPA_landmarks$coords,
+                             size=GPA_landmarks$Csize, species=GMM_data_noFossil$species)
 ```
 # PCA
 ```{r}
 
-Amb_PCA <- gm.prcomp(GPA_landmarks_sub$coords)
-
+GPA_landmarks$coords <- two.d.array(GPA_landmarks$coords) #get the data in XY format for PCA
+Amb_PCA <- prcomp(GPA_landmarks$coords)
 
 
 ```
@@ -55,24 +55,117 @@ PC_scores <- as.data.frame(Amb_PCA$x)
 library(ggplot2)
 library(grid)
 library(gridExtra)
+library(dplyr)
+library(ggalt)
+library(ggforce)
 theme<-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),strip.background=element_blank(),axis.text.x=element_text(colour="black"),axis.text.y=element_text(colour="black"),axis.ticks=element_line(colour="black"),plot.margin=unit(c(1,1,1,1),"line"))
 percentage <- round(Amb_PCA$sdev / sum(Amb_PCA$sdev) * 100, 2)
 percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), "%", ")", sep="") )
 
-# library(RColorBrewer)
-# getPalette = colorRampPalette(brewer.pal(12, "Paired"))
-# my.colors=rainbow(28) #set up color palette of rainbow colors with n = 14
-# plot(1:28, pch=19, cex=2, col=my.colors)
+GMM_data_noFossil$species <- factor(GMM_data_noFossil$species, levels = 
+                                c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+                                  "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum")) # Reorder species
+levels(GMM_data_noFossil$species)
 
 library(randomcoloR)
-n <- 14
-palette <- distinctColorPalette(n)
+n <- 14 
+palette <- distinctColorPalette(n) #create 14 color palette
 
-p<-ggplot(PC_scores,aes(x=Comp1,y=Comp2,color=GMM_data_sub$species ))
-p<-p+geom_point(size =5)+theme + xlab(percentage[1]) + ylab(percentage[2]) +scale_color_manual(values = palette)
-# p + stat_ellipse()
+p<-ggplot(PC_scores,aes(x=PC1,y=PC2,color=GMM_data_noFossil$species ))
+p<-p+geom_point(size =5)+theme + xlab(percentage[1]) + ylab(percentage[2]) +scale_color_manual(values = palette) +
+  geom_encircle(expand=0, size = 3)+ theme_bw()
 p
 
+```
+
+### Load in Fossil data ###
+
+```{r}
+
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/GMM_data_fossil.RData?raw=true",   "GMM_data_fossil.RData")
+load("GMM_data_fossil.RData")
+
+```
+
+
+```{r}
+
+# Generalized procrustes analysis
+
+GPA_fossil_landmarks <- gpagen(GMM_data_fossil$land)
+
+```
+
+```{r}
+
+#Create geomorph data frame
+
+Amb_fossil_gdf<-geomorph.data.frame(coords=GPA_fossil_landmarks$coords,
+                             size=GPA_fossil_landmarks$Csize, species=GMM_data_fossil$species)
+Amb_fossil_coords <- two.d.array(Amb_fossil_gdf$coords) #get the data in XY format for PCA
+
+```
+
+```{r}
+
+# Project fossil data #
+Amb_fossil_PCA <- predict(Amb_PCA, Amb_fossil_coords) #project fossil data onto PCA
+Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA) #save fossil PC scores
+
+PC_scores <- cbind(PC_scores, genus= GMM_data_noFossil$species) #add species column
+Fossil_PC_scores <- cbind(Fossil_PC_scores, genus= GMM_data_fossil$species) #add species column
+
+All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of the fossils
+
+pointsToLabel <- as.character(GMM_data_fossil$species)
+
+All_PC_scores$genus <- factor(All_PC_scores$genus, levels = 
+                                        c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+                                          "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", pointsToLabel)) # Reorder species
+
+species <- c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+             "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum")
+ #creates species vector for plotting
+
+```
+
+# Plot fossils in PCA
+
+```{r}
+
+pcaplot <- ggplot(data = All_PC_scores, mapping = aes(x = PC1, y = PC2,
+                                           col = genus, label = genus)) # creates the initial plot with datapoints color-coded and unique symbols by each genus
+pcaplot <- pcaplot + geom_encircle(expand=0, size = 2, data = All_PC_scores[!All_PC_scores$genus %in% pointsToLabel,])+ theme_bw()
+pcaplot <- pcaplot + 
+  geom_text(aes(PC1, PC2, label = genus), nudge_y = .003, data = All_PC_scores[All_PC_scores$genus %in% pointsToLabel,])+ geom_point(data = All_PC_scores[All_PC_scores$genus %in% pointsToLabel,])
+
+pcaplot <- pcaplot + scale_color_manual(breaks = c(species),
+                                values=c("black", "black", "black", "black", "black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
+                                         "#CDDADD", "#DC5956", "#E363BB"))
+pcaplot
+
+```
+
+### Statistical analyses ###
+
+```{r}
+
+### Load in subset data ###
+
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/GMM_data_sub.RData?raw=true",   "GMM_data_sub.RData")
+load("GMM_data_sub.RData")
+
+```
+
+```{r}
+# Generalized procrustes analysis
+
+GMM_GPA_sub_coords <- gpagen(GMM_data_sub$land)
+
+#Create geomorph data frame
+
+Amb_gdf_sub<-geomorph.data.frame(coords=GMM_GPA_sub_coords$coords,
+                             size=GMM_GPA_sub_coords$Csize, species=GMM_data_sub$species)
 ```
 
 ## ANOVA ##
@@ -81,14 +174,15 @@ p
 
 # Without size
 Amb_anova <- procD.lm(coords ~ species, 
-                      data = Amb_gdf, iter = 999, 
+                      data = Amb_gdf_sub, iter = 999, 
                       RRPP = TRUE, print.progress = FALSE)
 Amb_anova$aov.table
 
+# plot(Amb_anova, type = "diagnostics", outliers = TRUE)
 
 # With size
 Amb_anova_size <- procD.lm(coords ~ species*size, 
-                           data = Amb_gdf, iter = 999, 
+                           data = Amb_gdf_sub, iter = 999, 
                            RRPP = TRUE, print.progress = FALSE)
 Amb_anova_size$aov.table
 
@@ -98,7 +192,7 @@ Amb_anova_size$aov.table
 ### Post-hoc comparisons
 
 ```{r}
-gp <-  interaction(Amb_gdf$species)
+gp <-  interaction(Amb_gdf_sub$species)
 PW <- pairwise(Amb_anova, groups = gp, covariate = NULL)
 
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = TRUE)
@@ -126,14 +220,14 @@ plot(tree)
 
 ```{r}
 #Subset tree to include only GMM species
-Amb_species<-unique(GMM_data_sub$species)
+Amb_species<-unique(Amb_gdf_sub$species)
 tips<-tree$tip.label
 ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
 tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
 plotTree(tree,ftype="i")
 #Tree did not include A.mavortium so I lumped that species with A.tigrinum
-Amb_gdf$species<-gsub("A.mavortium", "A.tigrinum", Amb_gdf$species, fixed = TRUE)
-Amb_gdf$species<-as.factor(Amb_gdf$species)
+Amb_gdf_sub$species<-gsub("A.mavortium", "A.tigrinum", Amb_gdf_sub$species, fixed = TRUE)
+Amb_gdf_sub$species<-as.factor(Amb_gdf_sub$species)
 ```
 
 ### Preformed a group PCA
@@ -141,7 +235,7 @@ Amb_gdf$species<-as.factor(Amb_gdf$species)
 ```{r}
 
 library(Morpho)
-gpca <- groupPCA(Amb_gdf$coords, Amb_gdf$species, rounds=0)
+gpca <- groupPCA(Amb_gdf_sub$coords, Amb_gdf_sub$species, rounds=0)
 plot(gpca$groupmeans)
 
 
@@ -217,17 +311,18 @@ rate.comp$pairwise.pvalue
 ```{r}
 library(Morpho)
 
-DFA<-CVA(GPA_landmarks_sub$coords, GMM_data_sub$species, cv = TRUE)
+DFA<-CVA(GMM_GPA_sub_coords$coords, GMM_data_sub$species, cv = TRUE, rounds = 0)
 
 barplot(DFA$Var[,2]) # Variance explained by the canonical roots
+```
 
+```{r}
 # Assess the accuracy of jacknife #
 
 accJack <- table(DFA$groups, DFA$class)
 accJack
 diag(prop.table(accJack, 1)) #accuracy per species as %
 sum(accJack[row(accJack) == col(accJack)]) / sum(accJack) #overall accuracy
-
 
 ```
 
@@ -239,32 +334,71 @@ DFA_cva <- data.frame(DFA$CVscores, species = DFA$groups)
 ggplot(DFA_cva, aes(CV.1, CV.2)) +
   geom_point(aes(color = species)) + theme_classic()
 
+```
+
+# Predict fossils #
+
+```{r}
+fossil_CVA_scores <- predict(DFA,GPA_fossil_landmarks$coords)
+
+fossil_class <- classify(DFA, cv = FALSE, newdata = GPA_fossil_landmarks$coords)
+fossil_class$class
+fossil_class$posterior
+```
+
+
+```{r}
 #alternative plot
 plot(DFA$CVscores, col=GMM_data_sub$species, pch=as.numeric(GMM_data_sub$species), typ="n",asp=1,
      xlab=paste("1st canonical axis", paste(round(DFA$Var[1,2],1),"%")),
      ylab=paste("2nd canonical axis", paste(round(DFA$Var[2,2],1),"%")))
 text(DFA$CVscores, as.character(GMM_data_sub$species), col=as.numeric(GMM_data_sub$species), cex=.7)
-
+text(fossil_CVA_scores, as.character(GMM_data_fossil$species), cex=.7)
+points(DFA$CVscores, col=as.numeric(palette))
 ```
 
 ```{r}
 # Plot Mahalahobis distances as dendrogram #
 
-dendroS=hclust(DFA$Dist$GroupdistMaha)
-dendroS$labels=levels(GMM_data_sub$species)
-par(mar=c(6.5,4.5,1,1))
-dendroS=as.dendrogram(dendroS)
-plot(dendroS, main='',sub='', xlab="",
-     ylab='Mahalahobis distance')
+library(HDMD)
+Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$genus, digits = 3)
+names = rownames(Mahala1$means) #capture labels
+
+mahala = sqrt(Mahala1$distance) #mahalanobis distance
+rownames(mahala) = names #set rownames in the dissimilarity matrix
+colnames(mahala) = names #set colnames in the dissimilarity matrix
+
+mahala <- as.dist(mahala) #this is the mahalanobis dissimilarity matrix 
+
+dendroS <- hclust(mahala)
+
+library("ape")
+
+plot(as.phylo(dendroS), type = "unrooted", cex = 0.9,
+     no.margin = TRUE)
 
 ```
 
 ## K Nearest neighbor ###:Non-parametric
 
+
+```{r}
+# prepare the data
+GMM_GPA_sub_coords$coords <- two.d.array(GMM_GPA_sub_coords$coords) #get the data in XY format for PCA
+GPA_fossil_landmarks$coords <- two.d.array(GPA_fossil_landmarks$coords) #get the data in XY format for PCA
+Amb_PCA_sub <- prcomp(GMM_GPA_sub_coords$coords)
+
+Amb_fossil_PCA2 <- predict(Amb_PCA_sub, Amb_fossil_coords)
+Fossil_PC_scores2 <- as.data.frame(Amb_fossil_PCA2)
+
+```
+
+
 ```{r}
 
 library(caret)
-Atlas_PC_scores <- data.frame(Amb_PCA$x,species=GMM_data_sub$species)
+
+Atlas_PC_scores <- data.frame(Amb_PCA_sub$x,species=GMM_data_sub$species)
 
 set.seed(123)
 
@@ -288,9 +422,21 @@ diag(prop.table(accKNN, 1))
 
 ```
 
+# Fossil predictions #
+
 ```{r}
+library(class)
+KnnTestPrediction_k7 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores$species, k=7, prob=TRUE)
+KnnTestPrediction_k7
 
+KnnTestPrediction_k5 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores$species, k=5, prob=TRUE)
+KnnTestPrediction_k5
 
+KnnTestPrediction_k3 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores$species, k=3, prob=TRUE)
+KnnTestPrediction_k3
 
 ```
 
