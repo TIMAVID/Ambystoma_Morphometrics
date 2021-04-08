@@ -1,7 +1,7 @@
 ## Load in data ##
 
-download.file(   "https://github.com/TIMAVID/Ambystoma/blob/fe4c0fe3f83265c6aa656946b696096524cdd26d/GMM/Data/GMM_data.RData?raw=true",   "GMM_data.RData")
-load("GMM_data.RData")
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/GMM_data_noFossils.RData?raw=true",   "GMM_data_noFossil.RData")
+load("GMM_data_noFossil.RData")
 
 library(geomorph)
 
@@ -14,11 +14,10 @@ GPA_landmarks_sub <- gpagen(GMM_data_sub$land)
 
 Amb_gdf<-geomorph.data.frame(coords=GPA_landmarks_sub$coords,
                              size=GPA_landmarks_sub$Csize, species=GMM_data_sub$species)
+
 ## PCA ##
 
 Amb_PCA <- gm.prcomp(GPA_landmarks_sub$coords)
-
-?gm.prcomp
 
 ### PCA vizualization ###
 
@@ -43,6 +42,25 @@ p<-ggplot(PC_scores,aes(x=Comp1,y=Comp2,color=GMM_data_sub$species ))
 p<-p+geom_point(size =5)+theme + xlab(percentage[1]) + ylab(percentage[2]) +scale_color_manual(values = palette)
 # p + stat_ellipse()
 p
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## ANOVA ##
 
@@ -138,43 +156,6 @@ plot(rate.comp)
 rate.comp$sigma.d.gp
 rate.comp$pairwise.pvalue
 
-## Discriminant Function Analysis ##
-
-library(Morpho)
-
-DFA<-CVA(GPA_landmarks_sub$coords, GMM_data_sub$species, cv = TRUE)
-
-barplot(DFA$Var[,2]) # Variance explained by the canonical roots
-
-# Assess the accuracy of jacknife #
-
-accJack <- table(DFA$groups, DFA$class)
-accJack
-diag(prop.table(accJack, 1))
-sum(accJack[row(accJack) == col(accJack)]) / sum(accJack)
-
-# Plot first two DF axes #
-
-DFA_cva <- data.frame(DFA$CVscores, species = DFA$groups)
-
-ggplot(DFA_cva, aes(CV.1, CV.2)) +
-  geom_point(aes(color = species)) + theme_classic()
-
-#alternative plot
-plot(DFA$CVscores, col=GMM_data_sub$species, pch=as.numeric(GMM_data_sub$species), typ="n",asp=1,
-     xlab=paste("1st canonical axis", paste(round(DFA$Var[1,2],1),"%")),
-     ylab=paste("2nd canonical axis", paste(round(DFA$Var[2,2],1),"%")))
-text(DFA$CVscores, as.character(GMM_data_sub$species), col=as.numeric(GMM_data_sub$species), cex=.7)
-
-# Plot Mahalahobis distances as dendrogram #
-
-dendroS=hclust(DFA$Dist$GroupdistMaha)
-dendroS$labels=levels(GMM_data_sub$species)
-par(mar=c(6.5,4.5,1,1))
-dendroS=as.dendrogram(dendroS)
-plot(dendroS, main='',sub='', xlab="",
-     ylab='Mahalahobis distance')
-
 
 ### K Nearest neighbor ###:Non-parametric
 library(caret)
@@ -202,3 +183,43 @@ diag(prop.table(accKNN, 1))
 
 
 
+
+# ## Discriminant Function Analysis ##
+# 
+# library(Morpho)
+# 
+# DFA<-CVA(GPA_landmarks_sub$coords, GMM_data_sub$species, cv = TRUE)
+# 
+# barplot(DFA$Var[,2]) # Variance explained by the canonical roots
+# 
+# # Assess the accuracy of jacknife #
+# 
+# accJack <- table(DFA$groups, DFA$class)
+# accJack
+# diag(prop.table(accJack, 1))
+# sum(accJack[row(accJack) == col(accJack)]) / sum(accJack)
+# 
+# # Plot first two DF axes #
+# 
+# DFA_cva <- data.frame(DFA$CVscores, species = DFA$groups)
+# 
+# ggplot(DFA_cva, aes(CV.1, CV.2)) +
+#   geom_point(aes(color = species)) + theme_classic()
+# 
+# #alternative plot
+# plot(DFA$CVscores, col=GMM_data_sub$species, pch=as.numeric(GMM_data_sub$species), typ="n",asp=1,
+#      xlab=paste("1st canonical axis", paste(round(DFA$Var[1,2],1),"%")),
+#      ylab=paste("2nd canonical axis", paste(round(DFA$Var[2,2],1),"%")))
+# text(DFA$CVscores, as.character(GMM_data_sub$species), col=as.numeric(GMM_data_sub$species), cex=.7)
+# 
+# # Plot Mahalahobis distances as dendrogram #
+# 
+# dendroS=hclust(DFA$Dist$GroupdistMaha)
+# dendroS$labels=levels(GMM_data_sub$species)
+# par(mar=c(6.5,4.5,1,1))
+# dendroS=as.dendrogram(dendroS)
+# plot(dendroS, main='',sub='', xlab="",
+#      ylab='Mahalahobis distance')
+# 
+# 
+# 
