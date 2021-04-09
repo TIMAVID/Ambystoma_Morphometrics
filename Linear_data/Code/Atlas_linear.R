@@ -12,7 +12,7 @@ library(dplyr)
 Atlas <-  Amb_linear_data[c(1, 3, 9:14, 55:56)] #select only relevant atlas measurements
 Atlas <- Atlas %>% dplyr::rename(M1 = 3, M2=4, M3=5,M4=6,M5=7,M6=8)# remame columns for easier manipulation
 
-Atlas_wofossil <- dplyr::filter(Atlas, !grepl('TxVP', species)) # remove fossils
+Atlas_wofossil <- dplyr::filter(Atlas, !grepl('41229*', species)) # remove fossils
 Atlas_wofossil <- Atlas_wofossil[,-1]
 
 Atlas_wofossil_noNA <- na.omit(Atlas_wofossil) # remove rows with N/A's
@@ -62,6 +62,7 @@ scores$species <- Atlas_wofossil_noNA$species # reattach species
 library(ggplot2)
 library(grid)
 library(gridExtra)
+library(ggalt)
 theme<-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),strip.background=element_blank(),axis.text.x=element_text(colour="black"),axis.text.y=element_text(colour="black"),axis.ticks=element_line(colour="black"),plot.margin=unit(c(1,1,1,1),"line"))
 
 percentage <- paste(colnames(scores), "(", paste(as.character(round(varPercent)), "%", " )", sep="") )

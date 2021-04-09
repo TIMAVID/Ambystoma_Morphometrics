@@ -35,10 +35,11 @@ Amb_linear_data <-  read.csv(Amb_linear_data)
 ```{r, echo=FALSE}
 library(dplyr)
 
-Atlas <-  Amb_linear_data[c(3, 9:14, 55:56)] #select only relevant atlas measurements
+Atlas <-  Amb_linear_data[c(1, 3, 9:14, 55:56)] #select only relevant atlas measurements
+Atlas <- Atlas %>% dplyr::rename(M1 = 3, M2=4, M3=5,M4=6,M5=7,M6=8)# remame columns for easier manipulation
 
-Atlas_wofossil <- dplyr::filter(Atlas, !grepl('TxVP', species)) # remove fossils
-Atlas_wofossil <- Atlas_wofossil %>% dplyr::rename(M1 = 2, M2=3, M3=4,M4=5,M5=6,M6=7) # remame columns for easier manipulation
+Atlas_wofossil <- dplyr::filter(Atlas, !grepl('41229*', species)) # remove fossils
+Atlas_wofossil <- Atlas_wofossil[,-1]
 
 Atlas_wofossil_noNA <- na.omit(Atlas_wofossil) # remove rows with N/A's
 
@@ -63,21 +64,21 @@ Atlas.pca <- prcomp(Atlas_wofossil_noNA[c(1:7)], center = TRUE, scale = TRUE) # 
 summary(Atlas.pca)
 sd <- Atlas.pca$sdev
 loadings <- Atlas.pca$rotation
-rownames(loadings) <- colnames(Atlas[c(1:7)])
+rownames(loadings) <- colnames(Atlas[c(2:8)])
 scores <- Atlas.pca$x
 
 # Show variance explained by PC's #
 var <- sd^2
 varPercent <- var/sum(var) * 100
 barplot(varPercent, xlab='PC', ylab='Percent Variance', names.arg=1:length(varPercent), las=1, ylim=c(0, max(varPercent)), col='gray')
-abline(h=1/ncol(Atlas[c(1:7)])*100, col='red')
+abline(h=1/ncol(Atlas[c(2:8)])*100, col='red')
 
 fviz_eig(Atlas.pca, xlab = "Principal Components")
 
 #Show loadings #
 
 loadings
-sqrt(1/ncol(Atlas[c(1:7)])) # cutoff for 'important' loadings
+sqrt(1/ncol(Atlas[c(2:8)])) # cutoff for 'important' loadings
 
 # dev.new(height=7, width=7)
 biplot(scores[, 1:2], loadings[, 1:2], cex=0.9)
@@ -94,6 +95,7 @@ library(grid)
 library(gridExtra)
 library(randomcoloR)
 library(ggfortify)
+library(ggalt)
 ```
 
 ```{r}
@@ -140,7 +142,7 @@ autoplot(Atlas.pca_2, data = Atlas_wofossil_noTub, colour = 'species', frame = T
 # PCA with fossils #
 
 ```{r}
-Atlas_fossil <- dplyr::filter(Atlas, grepl('41229', species)) # fossils
+Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
 Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 ```
 
@@ -150,10 +152,9 @@ Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 
 Atlas_fossil_complete <- na.omit(Atlas_fossil) # remove rows with N/A's
 
-Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,2:8])
+Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,1:7])
 Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA)
 
-PC_scores <- cbind(PC_scores, species= Atlas_wofossil_noTub$species)
 Fossil_PC_scores <- cbind(Fossil_PC_scores, species= Atlas_fossil_complete$species)
 
 All_PC_scores <- rbind(scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of your fossil
