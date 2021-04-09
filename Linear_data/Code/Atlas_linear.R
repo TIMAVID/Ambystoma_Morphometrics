@@ -98,10 +98,8 @@ autoplot(Atlas.pca_2, data = Atlas_wofossil_noTub, colour = 'species', frame = T
 
 # PCA with fossils #
 
-Atlas_fossil <- dplyr::filter(Atlas, grepl('TxVP', species)) # fossils
-Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, species))
-Atlas_fossil$Specimen<-gsub(".*_","",Atlas_fossil$Specimen)
-names(Atlas_fossil)[names(Atlas_fossil) == "Specimen"] <- "species"
+Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
+Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 
 
 Atlas_fossil_complete <- na.omit(Atlas_fossil) # remove rows with N/A's

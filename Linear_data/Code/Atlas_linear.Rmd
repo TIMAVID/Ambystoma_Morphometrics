@@ -140,22 +140,11 @@ autoplot(Atlas.pca_2, data = Atlas_wofossil_noTub, colour = 'species', frame = T
 # PCA with fossils #
 
 ```{r}
-Atlas_fossil <- dplyr::filter(Atlas, grepl('TxVP', species)) # fossils
-
+Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
+Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 ```
 
-```{r}
-Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, species))
-```
 
-```{r}
-names(Atlas_fossil)[names(Atlas_fossil) == "Specimen"] <- "species"
-```
-
-```{r}
-Atlas_fossil$species<-gsub(".*_","",Atlas_fossil$species)
-
-```
 
 ```{r}
 
