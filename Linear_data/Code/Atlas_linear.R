@@ -9,10 +9,11 @@ Amb_linear_data <- read_excel("Amb_linear_data.xlsx")
 # Tidy data #
 library(dplyr)
 
-Atlas <-  Amb_linear_data[c(3, 9:14, 55:56)] #select only relevant atlas measurements
+Atlas <-  Amb_linear_data[c(1, 3, 9:14, 55:56)] #select only relevant atlas measurements
+Atlas <- Atlas %>% dplyr::rename(M1 = 3, M2=4, M3=5,M4=6,M5=7,M6=8)# remame columns for easier manipulation
 
 Atlas_wofossil <- dplyr::filter(Atlas, !grepl('TxVP', species)) # remove fossils
-Atlas_wofossil <- Atlas_wofossil %>% dplyr::rename(M1 = 2, M2=3, M3=4,M4=5,M5=6,M6=7) # remame columns for easier manipulation
+Atlas_wofossil <- Atlas_wofossil[,-1]
 
 Atlas_wofossil_noNA <- na.omit(Atlas_wofossil) # remove rows with N/A's
 
@@ -92,7 +93,59 @@ Atlas_wofossil_noTub$species <- factor(Atlas_wofossil_noTub$species, levels =
                                           "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum")) # Reorder species
 
 Atlas.pca_2 <- prcomp(Atlas_wofossil_noTub[c(1:6)], center = TRUE, scale = FALSE) # PCA
+PC_scores <- as.data.frame(Atlas.pca_2$x)
 autoplot(Atlas.pca_2, data = Atlas_wofossil_noTub, colour = 'species', frame = TRUE, label = TRUE) 
+
+# PCA with fossils #
+
+Atlas_fossil <- dplyr::filter(Atlas, grepl('TxVP', species)) # fossils
+Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, species))
+Atlas_fossil$Specimen<-gsub(".*_","",Atlas_fossil$Specimen)
+names(Atlas_fossil)[names(Atlas_fossil) == "Specimen"] <- "species"
+
+
+Atlas_fossil_complete <- na.omit(Atlas_fossil) # remove rows with N/A's
+
+Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,2:8])
+Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA)
+
+PC_scores <- cbind(PC_scores, species= Atlas_wofossil_noTub$species)
+Fossil_PC_scores <- cbind(Fossil_PC_scores, species= Atlas_fossil_complete$species)
+
+All_PC_scores <- rbind(scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of your fossil
+tail(All_PC_scores)
+pointsToLabel <- as.character(Atlas_fossil_complete$species)
+
+
+species <- c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+             "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum")
+
+
+
+pcaplot <- ggplot(data = All_PC_scores, mapping = aes(x = PC1, y = PC2,
+                                                      col = species, label = species)) # creates the initial plot with datapoints color-coded and unique symbols by each species
+pcaplot <- pcaplot + geom_encircle(expand=0, size = 2, data = All_PC_scores[!All_PC_scores$species %in% pointsToLabel,])+ theme_bw()
+pcaplot <- pcaplot + 
+  geom_text(aes(PC1, PC2, label = species), nudge_y = .003,
+            check_overlap = FALSE, data = All_PC_scores[All_PC_scores$species %in% pointsToLabel,])+ geom_point(data = All_PC_scores[All_PC_scores$species %in% pointsToLabel,])
+
+pcaplot <- pcaplot + scale_color_manual(breaks = c(species),
+                                        values=c("black", "black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
+                                                 "#CDDADD", "#DC5956", "#E363BB"))
+pcaplot
+
+
+# Tuberculum interglenoideum plot
+
+library(EnvStats)
+Tub_dat <- Atlas_wofossil_noNA[c(1,9)]
+  
+ventral_extension_p <- ggplot(data = Tub_dat, aes(x = species, y = (tub_interglen_extension)))
+ventral_extension_p <- ventral_extension_p + geom_boxplot(na.rm = TRUE)
+ventral_extension_p <- ventral_extension_p + theme(axis.text.x = element_text(angle = 90))
+ventral_extension_p <- ventral_extension_p + ylab("ventral extension (mm)") + stat_n_text() +theme_classic()
+ventral_extension_p
+
 
 ### Statistical Tests ###
 
@@ -242,6 +295,19 @@ plot(Atlascva$CVscores, col=Atlas_wofossil_noTub_sub$species, pch=as.numeric(Atl
      xlab=paste("1st canonical axis", paste(round(Atlascva$Var[1,2],1),"%")),
      ylab=paste("2nd canonical axis", paste(round(Atlascva$Var[2,2],1),"%")))
 text(Atlascva$CVscores, as.character(Atlas_wofossil_noTub_sub$species), col=as.numeric(Atlas_wofossil_noTub_sub$species), cex=.7)
+
+# DFA Fossil classification #
+
+
+
+
+
+
+
+
+
+
+
 
 # Plot Mahalahobis distances as dendrogram #
 

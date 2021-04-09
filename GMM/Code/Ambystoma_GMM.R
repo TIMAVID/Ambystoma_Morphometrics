@@ -200,14 +200,15 @@ bbox3d(color = c("white"),shininess=15, alpha=0.3,xat=c(10), xlab="x",yat=c(10),
 text3d((phylo.PCA$x[,1:3]+0.005), texts = substr(A_species,1,6))
 
 #Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
-physignal(gpca$groupmeans, tree, print.progress = F)
+physignal(gpca$groupmeans, tree, print.progress = F, iter = 999)
 
 #Phylogenetic generalized least squares
 
 avg_gdf<-geomorph.data.frame(coords=gpca$groupmeans, species=A_species) #make new geomorph dataframe with group mean coords
 
-pgls<-procD.pgls(coords~species, phy=tree, data=avg_gdf, print.progress = F) #Phylogenetic generalized least squares
+pgls<-procD.pgls(coords~species, phy=tree, data=avg_gdf, print.progress = F, iter = 999) #Phylogenetic generalized least squares
 pgls$aov.table
+?procD.pgls
 
 #Compare evolutionary rates in different portions of the tree based on brownian motion
 
@@ -216,7 +217,6 @@ rate.comp<-compare.evol.rates(avg_gdf$coords, tree, gp=avg_gdf$species, method =
 plot(rate.comp)
 rate.comp$sigma.d.gp
 rate.comp$pairwise.pvalue
-
 
 ### K Nearest neighbor ###:Non-parametric
 
@@ -264,7 +264,6 @@ KnnTestPrediction_k5
 KnnTestPrediction_k3 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores$species, k=3, prob=TRUE)
 KnnTestPrediction_k3
-
 
 
 ## Discriminant Function Analysis ##
