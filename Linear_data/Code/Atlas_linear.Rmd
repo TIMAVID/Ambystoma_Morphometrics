@@ -372,6 +372,25 @@ plot(Atlascva$CVscores, col=Atlas_wofossil_noTub_sub$species, pch=as.numeric(Atl
 text(Atlascva$CVscores, as.character(Atlas_wofossil_noTub_sub$species), col=as.numeric(Atlas_wofossil_noTub_sub$species), cex=.7)
 ```
 
+# DFA Fossil classification
+
+```{r}
+fossil_CVA_scores <- predict(Atlascva, as.matrix(Atlas_fossil_complete[,2:7]))
+
+fossil_class <- classify(Atlascva, cv = FALSE, newdata = as.matrix(Atlas_fossil_complete[,2:7]))
+fossil_class$class
+fossil_class$posterior
+
+plot(Atlascva$CVscores, col=Atlas_wofossil_noTub_sub$species, pch=as.numeric(Atlas_wofossil_noTub_sub$species), typ="n",asp=1,
+     xlab=paste("1st canonical axis", paste(round(Atlascva$Var[1,2],1),"%")),
+     ylab=paste("2nd canonical axis", paste(round(Atlascva$Var[2,2],1),"%")))
+
+text(fossil_CVA_scores, as.character(Atlas_fossil_complete$species), cex=.7)
+text(Atlascva$CVscores, as.character(Atlas_wofossil_noTub_sub$species), col=as.numeric(Atlas_wofossil_noTub_sub$species), cex=.7)
+
+
+```
+
 ### Plot Mahalahobis distances as dendrogram #
 
 ```{r}
@@ -399,7 +418,7 @@ round(importance(Atlas.rf), 2)
 varImpPlot(Atlas.rf)
 ```
 
-# K Nearest neighbor ###:Non-parametric
+## K Nearest neighbor ###:Non-parametric
 
 ```{r}
 library(tidyverse)
@@ -425,6 +444,27 @@ mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
 accKNN <- table(Atlas_wofossil_noTub_sub$species,predicted.classes)
 accKNN
 diag(prop.table(accKNN, 1))
+```
+
+# Fossil predictions
+
+```{r}
+
+
+library(class)
+KnnTestPrediction_k7 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=7, prob=TRUE)
+KnnTestPrediction_k7
+
+KnnTestPrediction_k5 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=5, prob=TRUE)
+KnnTestPrediction_k5
+
+KnnTestPrediction_k3 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=3, prob=TRUE)
+KnnTestPrediction_k3
+
+
 ```
 
 # Model selection (multinominal regression) 

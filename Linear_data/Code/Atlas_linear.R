@@ -105,7 +105,7 @@ Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 
 Atlas_fossil_complete <- na.omit(Atlas_fossil) # remove rows with N/A's
 
-Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,2:8])
+Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,1:7])
 Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA)
 
 PC_scores <- cbind(PC_scores, species= Atlas_wofossil_noTub$species)
@@ -267,7 +267,7 @@ sum(accAtlasLDA[row(accAtlasLDA) == col(accAtlasLDA)]) / sum(accAtlasLDA)
 #DFA# With MORPHO
 
 library(Morpho)
-Atlascva=CVA(Atlas_wofossil_noTub_sub[,1:6], groups=Atlas_wofossil_noTub_sub$species, rounds = 10000, cv = TRUE)
+Atlascva <- CVA(Atlas_wofossil_noTub_sub[,1:6], groups=Atlas_wofossil_noTub_sub$species, rounds = 0, cv = TRUE)
 
 barplot(Atlascva$Var[,2]) # Variance explained by the canonical roots
 
@@ -297,16 +297,18 @@ text(Atlascva$CVscores, as.character(Atlas_wofossil_noTub_sub$species), col=as.n
 
 # DFA Fossil classification #
 
+fossil_CVA_scores <- predict(Atlascva, as.matrix(Atlas_fossil_complete[,2:7]))
 
+fossil_class <- classify(Atlascva, cv = FALSE, newdata = as.matrix(Atlas_fossil_complete[,2:7]))
+fossil_class$class
+fossil_class$posterior
 
+plot(Atlascva$CVscores, col=Atlas_wofossil_noTub_sub$species, pch=as.numeric(Atlas_wofossil_noTub_sub$species), typ="n",asp=1,
+     xlab=paste("1st canonical axis", paste(round(Atlascva$Var[1,2],1),"%")),
+     ylab=paste("2nd canonical axis", paste(round(Atlascva$Var[2,2],1),"%")))
 
-
-
-
-
-
-
-
+text(fossil_CVA_scores, as.character(Atlas_fossil_complete$species), cex=.7)
+text(Atlascva$CVscores, as.character(Atlas_wofossil_noTub_sub$species), col=as.numeric(Atlas_wofossil_noTub_sub$species), cex=.7)
 
 # Plot Mahalahobis distances as dendrogram #
 
@@ -327,9 +329,28 @@ print(Atlas.rf)
 rf_acc <- Atlas.rf$confusion
 rf_acc <- 1-rf_acc[,11] # percent correct classification
 rf_acc
+
+mean(Atlas.rf$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
+
 # Look at variable importance
 round(importance(Atlas.rf), 2)
 varImpPlot(Atlas.rf)
+
+# with variable M4 removed
+
+Atlas.rf_M1 <- randomForest(species ~ M1 + M2 + M3 + M5 + M6, data=Atlas_wofossil_noTub_sub, importance=TRUE,
+                         proximity=TRUE)
+print(Atlas.rf_M1)
+rf_acc_M1 <- Atlas.rf_M1$confusion
+rf_acc_M1 <- 1-rf_acc_M1[,11] # percent correct classification
+rf_acc_M1
+mean(Atlas.rf_M1$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
+
+
+# Predict fossils
+
+y_pred = predict(Atlas.rf, newdata = Atlas_fossil_complete[,2:7])
+y_pred
 
 ### K Nearest neighbor ###:Non-parametric
 
@@ -346,7 +367,7 @@ KNNmodel <- train(
   species ~., data = Atlas_wofossil_noTub_sub, method = "knn",
   trControl = trainControl("LOOCV", number =1),
   preProcess = c("center"), #center the data
-  tuneLength = 6)
+  tuneLength = 10)
 
 plot(KNNmodel) # plot accuracy vs k
 KNNmodel$bestTune # optimal k
@@ -359,6 +380,22 @@ mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
 accKNN <- table(Atlas_wofossil_noTub_sub$species,predicted.classes)
 accKNN
 diag(prop.table(accKNN, 1))
+
+
+# Fossil predictions #
+
+library(class)
+KnnTestPrediction_k7 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=7, prob=TRUE)
+KnnTestPrediction_k7
+
+KnnTestPrediction_k5 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=5, prob=TRUE)
+KnnTestPrediction_k5
+
+KnnTestPrediction_k3 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=3, prob=TRUE)
+KnnTestPrediction_k3
 
 
 ### Model selection (multinominal regression) 
@@ -379,6 +416,111 @@ plot(res)
 top <- weightable(res)
 top
 
+
+# KNN with top models
+
+set.seed(123)
+
+KNNmodel_1 <- train(
+  species ~M1 + M3 + M4 + M5 + M6, data = Atlas_wofossil_noTub_sub, method = "knn",
+  trControl = trainControl("LOOCV", number =1),
+  preProcess = c("center"), #center the data
+  tuneLength = 10)
+
+plot(KNNmodel_1) # plot accuracy vs k
+KNNmodel_1$bestTune # optimal k
+
+predicted.classes_M1 <- KNNmodel_1 %>% predict(Atlas_wofossil_noTub_sub[c(1,3:6)]) # predict class based on KNN model
+head(predicted.classes_M1)
+mean(predicted.classes_M1 == Atlas_wofossil_noTub_sub$species) #overall accuracy
+
+
+set.seed(123)
+
+KNNmodel_2 <- train(
+  species ~M1 + M3 + M4 + M5, data = Atlas_wofossil_noTub_sub, method = "knn",
+  trControl = trainControl("LOOCV", number =1),
+  preProcess = c("center"), #center the data
+  tuneLength = 10)
+
+plot(KNNmodel_2) # plot accuracy vs k
+KNNmodel_2$bestTune # optimal k
+
+predicted.classes_M2 <- KNNmodel_2 %>% predict(Atlas_wofossil_noTub_sub[c(1,3:5)]) # predict class based on KNN model
+head(predicted.classes_M2)
+mean(predicted.classes_M2 == Atlas_wofossil_noTub_sub$species) #overall accuracy
+
+
+## Phylogenetic signal ##
+
+# Load in data #
+require(phytools)
+
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/Amb_species?raw=true",   "Amb_species.txt")
+
+# Read in tree
+
+tree <- read.newick("Amb_species.txt")  #tree from Williams et al. 2013
+
+par(mar=c(1,1,1,1))
+tree$tip.label<-gsub("^", "A.", tree$tip.label)
+plot(tree)
+
+#Subset tree to include only GMM species
+Amb_species<-unique(Atlas_wofossil_noTub_sub$species)
+tips<-tree$tip.label
+ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
+tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
+plotTree(tree,ftype="i")
+#Tree did not include A.mavortium so I lumped that species with A.tigrinum
+Atlas_wofossil_noTub_sub$species<-gsub("A.mavortium", "A.tigrinum", Atlas_wofossil_noTub_sub$species, fixed = TRUE)
+Atlas_wofossil_noTub_sub$species<-as.factor(Atlas_wofossil_noTub_sub$species)
+Atlas_wofossil_noTub_sub$species <- factor(Atlas_wofossil_noTub_sub$species, levels = 
+                                             c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium")) # Reorder species
+
+
+#Preformed a group PCA
+library(Morpho)
+library(geomorph)
+gpca <- groupPCA(Atlas_wofossil_noTub_sub[,1:6], Atlas_wofossil_noTub_sub$species, rounds=0)
+plot(gpca$groupmeans)
+?groupPCA
+#Performed a Phylogenetic PCA based on group means
+phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = FALSE)
+summary(phylo.PCA)
+
+A_species<-attributes(gpca$groupmeans) #access attributes names
+A_species<-(A_species$dimnames[[1]])
+A_species<-as.factor(A_species)
+A_species <- factor(A_species, levels = 
+                                             c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum")) # Reorder species
+
+
+#Plot phylogenetic PCA
+plot(phylo.PCA, phylo = TRUE, main = "phylo PCA", col=A_species)
+
+#Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
+physignal(gpca$groupmeans, tree, print.progress = F, iter = 999)
+
+#Phylogenetic generalized least squares
+
+avg_gdf<-geomorph.data.frame(coords=gpca$groupmeans, species=A_species) #make new geomorph dataframe with group mean coords
+
+pgls<-procD.pgls(coords~species, phy=tree, data=avg_gdf, print.progress = F, iter = 999) #Phylogenetic generalized least squares
+pgls$aov.table
+
+
+#Compare evolutionary rates in different portions of the tree based on brownian motion
+
+names(A_species) <- levels(A_species)
+
+rate.comp<-compare.evol.rates(avg_gdf$coords, tree, gp=A_species, method = c("permutation"), iter = 999, print.progress = F)
+
+plot(rate.comp)
+rate.comp$sigma.d.gp
+rate.comp$pairwise.pvalue
 
 
 
