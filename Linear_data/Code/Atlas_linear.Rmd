@@ -492,3 +492,126 @@ top <- weightable(res)
 top
 
 ```
+
+# KNN with top models
+
+```{r}
+
+
+set.seed(123)
+
+KNNmodel_1 <- train(
+  species ~M1 + M3 + M4 + M5 + M6, data = Atlas_wofossil_noTub_sub, method = "knn",
+  trControl = trainControl("LOOCV", number =1),
+  preProcess = c("center"), #center the data
+  tuneLength = 10)
+
+plot(KNNmodel_1) # plot accuracy vs k
+KNNmodel_1$bestTune # optimal k
+
+predicted.classes_M1 <- KNNmodel_1 %>% predict(Atlas_wofossil_noTub_sub[c(1,3:6)]) # predict class based on KNN model
+head(predicted.classes_M1)
+mean(predicted.classes_M1 == Atlas_wofossil_noTub_sub$species) #overall accuracy
+
+
+set.seed(123)
+
+KNNmodel_2 <- train(
+  species ~M1 + M3 + M4 + M5, data = Atlas_wofossil_noTub_sub, method = "knn",
+  trControl = trainControl("LOOCV", number =1),
+  preProcess = c("center"), #center the data
+  tuneLength = 10)
+
+plot(KNNmodel_2) # plot accuracy vs k
+KNNmodel_2$bestTune # optimal k
+
+predicted.classes_M2 <- KNNmodel_2 %>% predict(Atlas_wofossil_noTub_sub[c(1,3:5)]) # predict class based on KNN model
+head(predicted.classes_M2)
+mean(predicted.classes_M2 == Atlas_wofossil_noTub_sub$species) #overall accuracy
+```
+
+## Phylogenetic signal ##
+
+```{r}
+
+# Load in data #
+require(phytools)
+
+download.file(   "https://github.com/TIMAVID/Ambystoma/blob/master/GMM/Data/Amb_species?raw=true",   "Amb_species.txt")
+
+# Read in tree
+
+tree <- read.newick("Amb_species.txt")  #tree from Williams et al. 2013
+
+par(mar=c(1,1,1,1))
+tree$tip.label<-gsub("^", "A.", tree$tip.label)
+plot(tree)
+
+```
+
+```{r}
+#Subset tree to include only GMM species
+Amb_species<-unique(Atlas_wofossil_noTub_sub$species)
+tips<-tree$tip.label
+ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
+tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
+plotTree(tree,ftype="i")
+#Tree did not include A.mavortium so I lumped that species with A.tigrinum
+Atlas_wofossil_noTub_sub$species<-gsub("A.mavortium", "A.tigrinum", Atlas_wofossil_noTub_sub$species, fixed = TRUE)
+Atlas_wofossil_noTub_sub$species<-as.factor(Atlas_wofossil_noTub_sub$species)
+Atlas_wofossil_noTub_sub$species <- factor(Atlas_wofossil_noTub_sub$species, levels = 
+                                             c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium")) # Reorder species
+
+```
+
+
+```{r}
+#Preformed a group PCA
+library(Morpho)
+library(geomorph)
+gpca <- groupPCA(Atlas_wofossil_noTub_sub[,1:6], Atlas_wofossil_noTub_sub$species, rounds=0)
+plot(gpca$groupmeans)
+?groupPCA
+#Performed a Phylogenetic PCA based on group means
+phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = FALSE)
+summary(phylo.PCA)
+
+A_species<-attributes(gpca$groupmeans) #access attributes names
+A_species<-(A_species$dimnames[[1]])
+A_species<-as.factor(A_species)
+A_species <- factor(A_species, levels = 
+                                             c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum")) # Reorder species
+
+
+#Plot phylogenetic PCA
+plot(phylo.PCA, phylo = TRUE, main = "phylo PCA", col=A_species)
+
+#Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
+physignal(gpca$groupmeans, tree, print.progress = F, iter = 999)
+
+#Phylogenetic generalized least squares
+
+avg_gdf<-geomorph.data.frame(coords=gpca$groupmeans, species=A_species) #make new geomorph dataframe with group mean coords
+
+pgls<-procD.pgls(coords~species, phy=tree, data=avg_gdf, print.progress = F, iter = 999) #Phylogenetic generalized least squares
+pgls$aov.table
+
+
+#Compare evolutionary rates in different portions of the tree based on brownian motion
+
+names(A_species) <- levels(A_species)
+
+rate.comp<-compare.evol.rates(avg_gdf$coords, tree, gp=A_species, method = c("permutation"), iter = 999, print.progress = F)
+
+plot(rate.comp)
+rate.comp$sigma.d.gp
+rate.comp$pairwise.pvalue
+```
+
+
+
+
+
+

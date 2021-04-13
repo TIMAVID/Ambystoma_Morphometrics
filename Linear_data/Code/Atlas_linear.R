@@ -105,13 +105,13 @@ Atlas_fossil <- subset(Atlas_fossil, select=-c(specimen_num, Specimen))
 
 Atlas_fossil_complete <- na.omit(Atlas_fossil) # remove rows with N/A's
 
-Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_complete[,1:7])
+Amb_fossil_PCA <- predict(Atlas.pca_2, Atlas_fossil_complete[,2:7])
 Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA)
 
 PC_scores <- cbind(PC_scores, species= Atlas_wofossil_noTub$species)
 Fossil_PC_scores <- cbind(Fossil_PC_scores, species= Atlas_fossil_complete$species)
 
-All_PC_scores <- rbind(scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of your fossil
+All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of your fossil
 tail(All_PC_scores)
 pointsToLabel <- as.character(Atlas_fossil_complete$species)
 
@@ -322,7 +322,7 @@ plot(dendroS, main='',sub='', xlab="",
 ### Random Forest ###:Non-parametric
 
 library(randomForest)
-
+set.seed(123)
 Atlas.rf <- randomForest(species ~ M1 + M2 + M3 + M4 + M5 + M6, data=Atlas_wofossil_noTub_sub, importance=TRUE,
                          proximity=TRUE)
 print(Atlas.rf)
@@ -337,9 +337,9 @@ round(importance(Atlas.rf), 2)
 varImpPlot(Atlas.rf)
 
 # with variable M4 removed
-
+set.seed(123)
 Atlas.rf_M1 <- randomForest(species ~ M1 + M2 + M3 + M5 + M6, data=Atlas_wofossil_noTub_sub, importance=TRUE,
-                         proximity=TRUE)
+                         proximity=TRUE, replace=FALSE)
 print(Atlas.rf_M1)
 rf_acc_M1 <- Atlas.rf_M1$confusion
 rf_acc_M1 <- 1-rf_acc_M1[,11] # percent correct classification
@@ -415,6 +415,33 @@ plot(res)
 
 top <- weightable(res)
 top
+
+
+
+multinom_model1 <- nnet::multinom(species ~ M1 + M3 + M4 + M5 + M6, data = Atlas_wofossil_noTub_sub, maxit=1000)
+multinom_model2 <- nnet::multinom(species ~ M1 + M3 + M4 + M5, data = Atlas_wofossil_noTub_sub, maxit=1000)
+multinom_model3 <- nnet::multinom(species ~ M1 + M2 + M3 + M4 + M5 + M6, data = Atlas_wofossil_noTub_sub, maxit=1000)
+multinom_model4 <- nnet::multinom(species ~ M1 + M2 + M3 + M5 + M6, data = Atlas_wofossil_noTub_sub, maxit=1000)
+multinom_model5 <- nnet::multinom(species ~ M1 + M2 + M3 + M6, data = Atlas_wofossil_noTub_sub, maxit=1000)
+multinom_model6 <- nnet::multinom(species ~ M2 + M3, data = Atlas_wofossil_noTub_sub, maxit=1000)
+
+
+modelacc <- function(model_name,test.data, species){
+  predicted.classes <- model_name %>% predict(test.data)
+  print(mean(predicted.classes == species))
+}
+
+modelacc(multinom_model6, Atlas_wofossil_noTub_sub, Atlas_wofossil_noTub_sub$species)
+
+
+predicted.classes <- multinom_model6 %>% predict(Atlas_fossil_complete[,2:7])
+
+
+
+
+
+
+
 
 
 # KNN with top models
