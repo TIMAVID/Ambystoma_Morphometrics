@@ -321,11 +321,17 @@ Sc_sub <- tibble::column_to_rownames(Sc_sub, var = "specimen_num")
 
 library(randomForest)
 
-T1.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=T1_sub, importance=TRUE,proximity=TRUE)
-T4.rf <- randomForest(species ~ M1b + M2b+ M3b+M4b+M5b+M6b+M7b, data=T4_sub, importance=TRUE,proximity=TRUE)
-T8.rf <- randomForest(species ~ M1c + M2c+ M3c+M4c+M5c+M6c+M7c, data=T8_sub, importance=TRUE,proximity=TRUE)
-T12.rf <- randomForest(species ~ M1d + M2d+ M3d+M4d+M5d+M6d+M7d, data=T12_sub, importance=TRUE,proximity=TRUE)
-Sc.rf <- randomForest(species ~ M14 + M15+ M16+M17+M18+M19+M20, data=Sc_sub, importance=TRUE,proximity=TRUE)
+T1.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=T1_sub, importance=TRUE,proximity=TRUE,ntree=500)
+T4.rf <- randomForest(species ~ M1b + M2b+ M3b+M4b+M5b+M6b+M7b, data=T4_sub, importance=TRUE,proximity=TRUE,ntree=500)
+T8.rf <- randomForest(species ~ M1c + M2c+ M3c+M4c+M5c+M6c+M7c, data=T8_sub, importance=TRUE,proximity=TRUE,ntree=500)
+T12.rf <- randomForest(species ~ M1d + M2d+ M3d+M4d+M5d+M6d+M7d, data=T12_sub, importance=TRUE,proximity=TRUE,ntree=500)
+Sc.rf <- randomForest(species ~ M14 + M15+ M16+M17+M18+M19+M20, data=Sc_sub, importance=TRUE,proximity=TRUE,ntree=500)
+
+result <- replicate(5, rfcv(T8_sub[,1:7], T8_sub$species), simplify=FALSE)
+error.cv <- sapply(result, "[[", "error.cv")
+matplot(result[[1]]$n.var, cbind(rowMeans(error.cv), error.cv), type="l",
+        lwd=c(2, rep(1, ncol(error.cv))), col=1, lty=1, log="x",
+        xlab="Number of variables", ylab="CV Error")
 
 RFacc <- function(rfmodel){
   i <- rfmodel$confusion

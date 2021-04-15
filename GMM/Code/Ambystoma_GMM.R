@@ -51,9 +51,8 @@ palette <- distinctColorPalette(n)
 
 p<-ggplot(PC_scores,aes(x=PC1,y=PC2,color=GMM_data_noFossil$species ))
 p<-p+geom_point(size =5)+theme + xlab(percentage[1]) + ylab(percentage[2]) +
-  geom_encircle(expand=0, size = 3)+ theme_bw() + scale_color_manual(breaks = c(species),
-                                                                     values=c("#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                                              "#CDDADD", "#DC5956", "#E363BB"))
+  geom_encircle(expand=0, size = 3)+ theme_bw() + scale_color_manual(name = "Species", values=c("#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
+                                                                              "#CDDADD", "#DC5956", "#E363BB")) + theme_classic()
 # p + stat_ellipse()
 p
 
@@ -102,9 +101,9 @@ pcaplot <- pcaplot +
   geom_text(aes(PC1, PC2, label = genus), nudge_y = .003,
             check_overlap = FALSE, data = All_PC_scores[All_PC_scores$genus %in% pointsToLabel,])+ geom_point(data = All_PC_scores[All_PC_scores$genus %in% pointsToLabel,])
 
-pcaplot <- pcaplot + scale_color_manual(breaks = c(species),
+pcaplot <- pcaplot + scale_color_manual(name = "Species", breaks = c(species),
                                 values=c("black", "black", "black", "black", "black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                         "#CDDADD", "#DC5956", "#E363BB"))
+                                         "#CDDADD", "#DC5956", "#E363BB")) + theme_classic()
 pcaplot
 
 ### Load in subset data ###
@@ -125,6 +124,16 @@ Amb_gdf_sub<-geomorph.data.frame(coords=GMM_GPA_sub_coords$coords,
 
 ## ANOVA ##
 
+#Check sample sizes
+
+Amb_sub<-data.frame(species=GMM_data_sub$species)
+
+t <- Amb_sub %>%
+  dplyr::group_by(species) %>%
+  dplyr::summarise(N = n())
+
+write.table(t, file = "GMMSampleSize.txt", sep = ",", quote = FALSE, row.names = F)
+
 # Without size
 Amb_anova <- procD.lm(coords ~ species, 
                       data = Amb_gdf_sub, iter = 999, 
@@ -141,13 +150,18 @@ Amb_anova_size$aov.table
 
 plot(Amb_anova_size, type = "diagnostics", outliers = TRUE)
 
+?permudist
+
 #Post-hoc comparisons
 
 gp <-  interaction(Amb_gdf_sub$species)
 PW <- pairwise(Amb_anova, groups = gp, covariate = NULL)
-
+?pairwise
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = TRUE)
-summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+t<- summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+t <- t$pairwise.tables$P
+
+write.table(t, file = "GMMPW.txt", sep = ",", quote = FALSE, row.names = T)
 
 ## Phylogenetic signal ##
 
@@ -248,14 +262,17 @@ mean(predicted.classes == Atlas_PC_scores$species) #overall accuracy
 
 accKNN <- table(Atlas_PC_scores$species,predicted.classes)
 accKNN
-diag(prop.table(accKNN, 1))
+
+t <- diag(prop.table(accKNN, 1))
+write.table(t, file = "KNNAcc.txt", sep = ",", quote = FALSE, row.names = T)
 
 # Fossil predictions #
 
 library(class)
 KnnTestPrediction_k7 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores$species, k=7, prob=TRUE)
-KnnTestPrediction_k7
+t <- cbind(as.character(GMM_data_fossil$species), as.character(KnnTestPrediction_k7[1:5]), as.character(attr(KnnTestPrediction_k7, 'prob')))
+write.table(t, file = "KNNFossil.txt", sep = ",", quote = FALSE, row.names = T)
 
 KnnTestPrediction_k5 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores$species, k=5, prob=TRUE)

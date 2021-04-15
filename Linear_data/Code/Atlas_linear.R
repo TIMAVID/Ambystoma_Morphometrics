@@ -95,6 +95,10 @@ Atlas_wofossil_noTub$species <- factor(Atlas_wofossil_noTub$species, levels =
 
 Atlas.pca_2 <- prcomp(Atlas_wofossil_noTub[c(1:6)], center = TRUE, scale = FALSE) # PCA
 PC_scores <- as.data.frame(Atlas.pca_2$x)
+
+percentage <- round(Atlas.pca_2$sdev / sum(Atlas.pca_2$sdev) * 100, 2)
+percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), "%", ")", sep="") )
+
 autoplot(Atlas.pca_2, data = Atlas_wofossil_noTub, colour = 'species', frame = TRUE, label = TRUE) 
 
 # PCA with fossils #
@@ -123,14 +127,14 @@ species <- c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opa
 
 pcaplot <- ggplot(data = All_PC_scores, mapping = aes(x = PC1, y = PC2,
                                                       col = species, label = species)) # creates the initial plot with datapoints color-coded and unique symbols by each species
-pcaplot <- pcaplot + geom_encircle(expand=0, size = 2, data = All_PC_scores[!All_PC_scores$species %in% pointsToLabel,])+ theme_bw()
+pcaplot <- pcaplot + geom_encircle(expand=0, size = 2, data = All_PC_scores[!All_PC_scores$species %in% pointsToLabel,])+ theme_classic()
 pcaplot <- pcaplot + 
   geom_text(aes(PC1, PC2, label = species), nudge_y = .003,
-            check_overlap = FALSE, data = All_PC_scores[All_PC_scores$species %in% pointsToLabel,])+ geom_point(data = All_PC_scores[All_PC_scores$species %in% pointsToLabel,])
+            check_overlap = FALSE, data = All_PC_scores[All_PC_scores$species %in% pointsToLabel,])+ geom_point(data = All_PC_scores)+ xlab(percentage[1]) + ylab(percentage[2])
 
-pcaplot <- pcaplot + scale_color_manual(breaks = c(species),
+pcaplot <- pcaplot + scale_color_manual(name = "Species", breaks = c(species),
                                         values=c("black", "black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                 "#CDDADD", "#DC5956", "#E363BB"))
+                                                 "#CDDADD", "#DC5956", "#E363BB")) 
 pcaplot
 
 
@@ -211,12 +215,16 @@ library(RVAideMemoire)
 require(vegan)
 #Permutational Multivariate Analysis of Variance Using Distance Matrices
 adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,method="euclidean") 
+# ?adonis
 
 #pairwise comparisons between group levels with corrections for multiple testing
 pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=50) #needs more permutation but takes a long time
 #or using euclidean distances
 AtlasPPM<-pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999, progress = FALSE)
 AtlasPPM
+t <- AtlasPPM$p.value
+t <-round(t, digits = 3)
+write.table(t, file = "Atlas linear PW", sep = ",", quote = FALSE, row.names = T)
 
 # tuberculum interglenoideum measurement only
 Atlas_wofossil_Tub_only <- as.data.frame(Atlas_wofossil[c(1,8:9)]) 
@@ -232,7 +240,7 @@ Atlas_wofossil_Tub_only <- dplyr::filter(Atlas_wofossil_Tub_only, !grepl('A.late
 
 #Permutational Anova
 perm.anova(Atlas_wofossil_Tub_only$tub_interglen_extension ~ Atlas_wofossil_Tub_only$species, nperm=1000)
-
+?perm.anova
 #pairwise comparisons between group levels with corrections for multiple testing
 library(rcompanion)
 
@@ -241,8 +249,10 @@ PT <- pairwisePermutationTest(tub_interglen_extension ~   species,
                              method = "fdr")
 PT
 
-pairwise.perm.t.test(Atlas_wofossil_Tub_only$tub_interglen_extension,Atlas_wofossil_Tub_only$species,nperm=999,progress = FALSE)
-
+t<- pairwise.perm.t.test(Atlas_wofossil_Tub_only$tub_interglen_extension,Atlas_wofossil_Tub_only$species,nperm=999,progress = FALSE)
+t <- t$p.value
+t <- round(t, 3)
+write.table(t, file = "Tub PW", sep = ",", quote = FALSE, row.names = T)
 ### DFA ###
 
 #PROBLEM:Check Multivariate normality:FAIL
