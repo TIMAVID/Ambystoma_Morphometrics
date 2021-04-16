@@ -165,11 +165,11 @@ ANTpcaplot <- ggplot(data = All_AntPC_scores, mapping = aes(x = PC1, y = PC2,
 ANTpcaplot <- ANTpcaplot + geom_encircle(expand=0, size = 2, data = All_AntPC_scores[!All_AntPC_scores$species %in% AntFossils,])+ theme_bw()
 ANTpcaplot <- ANTpcaplot + 
   geom_text(aes(PC1, PC2, label = species), nudge_y = .003,
-            check_overlap = FALSE, data = All_AntPC_scores[All_AntPC_scores$species %in% AntFossils,])+ geom_point(data = All_AntPC_scores[All_AntPC_scores$species %in% AntFossils,])
+            check_overlap = TRUE, data = All_AntPC_scores[All_AntPC_scores$species %in% AntFossils,])+ geom_point(data = All_AntPC_scores[All_AntPC_scores$species %in% AntFossils,])
 
 ANTpcaplot <- ANTpcaplot + scale_color_manual(breaks = c(species),
-                                        values=c("black", "black","black", "black","black", "black","black", "black","black", "black","black", "black","black", "black","black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                 "#CDDADD", "#DC5956", "#E363BB"))
+                                        values=c("black", "black","black", "black","black", "black","black", "black","black", "black","black", "black","black", "black","black", "black","black", "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
+                                                 "#CDDADD", "#DC5956", "#E363BB"))+ ggtitle("Anterior Vertebrae")
 ANTpcaplot
 
 
@@ -199,11 +199,11 @@ MIDpcaplot <- MIDpcaplot +
             check_overlap = TRUE, data = All_MIDPC_scores[All_MIDPC_scores$species %in% MIDFossils,])+ geom_point(data = All_MIDPC_scores)
 
 library(grDevices)
-n <- grDevices::gray.colors(41, start = 0.1, end = 0.4)
+n <- grDevices::gray.colors(39, start = 0.1, end = 0.4)
 
 MIDpcaplot <- MIDpcaplot + scale_color_manual(breaks = c(species),
                                         values=c(n, "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                 "#CDDADD", "#DC5956", "#E363BB"))
+                                                 "#CDDADD", "#DC5956", "#E363BB"))+ ggtitle("Middle Vertebrae")
 MIDpcaplot
 
 
@@ -237,7 +237,7 @@ n <- grDevices::gray.colors(3, start = 0.1, end = 0.4)
 
 POSTpcaplot <- POSTpcaplot + scale_color_manual(breaks = c(species),
                                               values=c(n, "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                       "#CDDADD", "#DC5956", "#E363BB"))
+                                                       "#CDDADD", "#DC5956", "#E363BB"))+ ggtitle("Posterior Vertebrae")
 POSTpcaplot
 
 # Sacral fossils
@@ -258,20 +258,24 @@ All_SCPC_scores <- (rbind(SCscores, FossilSC_PC_scores)) # create a new datafram
 SCFossils <- as.character(TrunkFossilSc$species)
 
 
-SCpcaplot <- ggplot(data = All_SCPC_scores, mapping = aes(x = PC1, y = PC2,
+SCfossilpcaplot <- ggplot(data = All_SCPC_scores, mapping = aes(x = PC1, y = PC2,
                                                               col = species, label = species)) # creates the initial plot with datapoints color-coded and unique symbols by each species
-SCpcaplot <- SCpcaplot + geom_encircle(expand=0, size = 2, data = All_SCPC_scores[!All_SCPC_scores$species %in% SCFossils,])+ theme_bw()
-SCpcaplot <- SCpcaplot + 
+SCfossilpcaplot <- SCfossilpcaplot + geom_encircle(expand=0, size = 2, data = All_SCPC_scores[!All_SCPC_scores$species %in% SCFossils,])+ theme_bw()
+SCfossilpcaplot <- SCfossilpcaplot + 
   geom_text(aes(PC1, PC2, label = species), nudge_y = .003,
-            check_overlap = FALSE, data = All_SCPC_scores[All_SCPC_scores$species %in% SCFossils,])+ geom_point(data = All_SCPC_scores)
+            check_overlap = TRUE, data = All_SCPC_scores[All_SCPC_scores$species %in% SCFossils,])+ geom_point(data = All_SCPC_scores)
 
 library(grDevices)
 n <- grDevices::gray.colors(7, start = 0.1, end = 0.4)
 
-SCpcaplot <- SCpcaplot + scale_color_manual(breaks = c(species),
+SCfossilpcaplot <- SCfossilpcaplot + scale_color_manual(breaks = c(species),
                                                 values=c(n, "#D5E25E", "#AA47E3" ,"#8E7BD9" ,"#D2A6D5" ,"#7AA9D2" ,"#78DDD0", "#CAE1AE", "#D7A79D", "#DAB059", "#75E555", "#79E194",
-                                                         "#CDDADD", "#DC5956", "#E363BB"))
-SCpcaplot
+                                                         "#CDDADD", "#DC5956", "#E363BB"))+ ggtitle("Sacral Vertebrae")
+SCfossilpcaplot 
+
+
+par(oma=c(0,0,2,0))
+grid.arrange(ANTpcaplot, MIDpcaplot ,POSTpcaplot,SCfossilpcaplot,nrow = 2)
 
 
 # Posterior extension plot
@@ -287,7 +291,6 @@ data_long <- gather(T8_extension, Type , Measurement, Cen_to_NeuAr:Cen_to_PoZy, 
 library(ggplot2)
 s <- ggplot(data_long, aes(species, Measurement, fill = Type)) + geom_boxplot(position = "dodge")
 s
-
 
 # Assess sample size per species
 library(tidyverse)
@@ -358,30 +361,46 @@ varImpPlot(T1.rf)
 TrunkAnt_sub <- dplyr::filter(TrunkAnt, !grepl('A.laterale|A.talpoideum|A.subsalsum|A.ordinarium', species))
 TrunkAnt_sub$species <- droplevels(TrunkAnt_sub$species)
 Ant.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=TrunkAnt_sub, importance=TRUE,proximity=TRUE)
+i <- Ant.rf$confusion
+i <- 1-i[,11] # percent correct classification
+
+
 AntFossil_pred = predict(Ant.rf, newdata = TrunkFossilAnt[,1:7])
 AntFossil_pred
 
 #Mid fossils
 TrunkMid_sub <- dplyr::filter(TrunkMid, !grepl('A.laterale|A.talpoideum|A.subsalsum|A.ordinarium', species))
 TrunkMid_sub$species <- droplevels(TrunkMid_sub$species)
-Mid.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=TrunkMid, importance=TRUE,proximity=TRUE)
+Mid.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=TrunkMid_sub, importance=TRUE,proximity=TRUE)
+j <- Mid.rf$confusion
+j <- 1-j[,11] # percent correct classification
+
 MidFossil_pred = predict(Mid.rf, newdata = TrunkFossilT8[,1:7])
 MidFossil_pred
 
 #Posterior fossils
 TrunkPost_sub <- dplyr::filter(TrunkPost, !grepl('A.laterale|A.talpoideum|A.subsalsum|A.ordinarium', species))
 TrunkPost_sub$species <- droplevels(TrunkPost_sub$species)
-Post.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=TrunkPost, importance=TRUE,proximity=TRUE)
+Post.rf <- randomForest(species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data=TrunkPost_sub, importance=TRUE,proximity=TRUE)
+k <- Post.rf$confusion
+k <- 1-k[,11] # percent correct classification
+
 PostFossil_pred = predict(Post.rf, newdata = TrunkFossilT12[,1:7])
 PostFossil_pred
 
 # Sacral vert fossils
 TrunkSc_sub <- dplyr::filter(Sc, !grepl('A.laterale|A.talpoideum|A.subsalsum|A.ordinarium', species))
 TrunkSc_sub$species <- droplevels(TrunkSc_sub$species)
-Sc.rf <- randomForest(species ~ M14 + M15+ M16+M17+M18+M19+M20, data=Sc, importance=TRUE,proximity=TRUE)
+Sc.rf <- randomForest(species ~ M14 + M15+ M16+M17+M18+M19+M20, data=TrunkSc_sub, importance=TRUE,proximity=TRUE)
+l <- Sc.rf$confusion
+l <- 1-l[,11] # percent correct classification
+
 ScFossil_pred = predict(Sc.rf, newdata = TrunkFossilSc[,1:7])
 ScFossil_pred
 
+m <- cbind(i,j,k,l)
+m <-round(m, digits = 2)
+write.table(m, file = "RFAc", sep = ",", quote = FALSE, row.names = T)
 
 ### K Nearest neighbor ###:Non-parametric
 
@@ -392,7 +411,7 @@ library(caret)
 set.seed(123)
 
 KNNmodel <- train(
-  species ~M14 + M15+ M16+M17+M18+M19+M20, data = TrunkSc_sub, method = "knn",
+  species ~ M1a + M2a+ M3a+M4a+M5a+M6a+M7a, data = TrunkAnt_sub, method = "knn",
   trControl = trainControl("LOOCV", number =1),
   preProcess = c("center"), #center the data
   tuneLength = 15)
@@ -400,38 +419,55 @@ KNNmodel <- train(
 plot(KNNmodel) # plot accuracy vs k
 KNNmodel$bestTune # optimal k
 
-predicted.classes <- KNNmodel %>% predict(TrunkMid_sub[,1:7]) # predict class based on KNN model
+predicted.classes <- KNNmodel %>% predict(TrunkAnt_sub[,1:7]) # predict class based on KNN model
 head(predicted.classes)
-mean(predicted.classes == TrunkMid_sub$species) #overall accuracy
+mean(predicted.classes == TrunkAnt_sub$species) #overall accuracy
 
 # assess accuracy per species
-accKNN <- table(TrunkMid_sub$species,predicted.classes)
+accKNN <- table(TrunkAnt_sub$species,predicted.classes)
 accKNN
-diag(prop.table(accKNN, 1))
+ii<-diag(prop.table(accKNN, 1))
 
+
+m <- cbind(i,ii,j,jj,k,kk,l,ll)
+m <-round(m, digits = 2)
+write.table(m, file = "RFKNNAc", sep = ",", quote = FALSE, row.names = T)
 
 ## Fossil predictions ##
 
 # Ant fossils #
 library(class)
-KnnAntPrediction_k9 <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
-                           TrunkAnt_sub$species, k=9, prob=TRUE)
-KnnAntPrediction_k9
+KnnAntPrediction_k7 <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
+                           TrunkAnt_sub$species, k=7, prob=TRUE)
+KnnAntPrediction_k7
+
+t <- cbind(as.character(TrunkFossilAnt$species), as.character(KnnAntPrediction_k7), as.character(attr(KnnAntPrediction_k7, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "Anterior fossils.txt", sep = ",", quote = FALSE, row.names = T)
+
 
 # Mid fossils #
 KnnMidPrediction_k9 <- knn(TrunkMid_sub[,1:7], TrunkFossilT8[,1:7],
                            TrunkMid_sub$species, k=9, prob=TRUE)
 KnnMidPrediction_k9
 
+t <- cbind(as.character(TrunkFossilT8$species), as.character(KnnMidPrediction_k9), as.character(attr(KnnMidPrediction_k9, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "Mid fossils.txt", sep = ",", quote = FALSE, row.names = T)
+
 # Posterior fossils #
-KnnPostPrediction_k9 <- knn(TrunkPost_sub[,1:7], TrunkFossilT12[,1:7],
-                            TrunkPost_sub$species, k=9, prob=TRUE)
-KnnPostPrediction_k9
+KnnPostPrediction_k7 <- knn(TrunkPost_sub[,1:7], TrunkFossilT12[,1:7],
+                            TrunkPost_sub$species, k=7, prob=TRUE)
+KnnPostPrediction_k7
 
 # Sacral fossils #
-KnnPostPrediction_k9 <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
+KnnPostPrediction_k5 <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
                             TrunkSc_sub$species, k=5, prob=TRUE)
-KnnPostPrediction_k9
+KnnPostPrediction_k5
 
 
 ### Model selection (multinominal regression) 

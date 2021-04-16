@@ -239,6 +239,7 @@ Atlas_wofossil_Tub_only <- dplyr::filter(Atlas_wofossil_Tub_only, !grepl('A.late
 
 
 #Permutational Anova
+set.seed(123)
 perm.anova(Atlas_wofossil_Tub_only$tub_interglen_extension ~ Atlas_wofossil_Tub_only$species, nperm=1000)
 ?perm.anova
 #pairwise comparisons between group levels with corrections for multiple testing
@@ -340,6 +341,10 @@ rf_acc <- Atlas.rf$confusion
 rf_acc <- 1-rf_acc[,11] # percent correct classification
 rf_acc
 
+t <- rf_acc
+t <-round(t, digits = 2)
+write.table(t, file = "Atlas linear KNNAC", sep = ",", quote = FALSE, row.names = T)
+
 mean(Atlas.rf$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
 
 # Look at variable importance
@@ -361,6 +366,11 @@ mean(Atlas.rf_M1$predicted == Atlas_wofossil_noTub_sub$species) #overall accurac
 
 y_pred = predict(Atlas.rf, newdata = Atlas_fossil_complete[,2:7])
 y_pred
+
+t <- y_pred
+t <- as.data.frame(t)
+t <-round(t, digits = 2)
+write.table(t, file = "Atlas linear RFAC", sep = ",", quote = FALSE, row.names = T)
 
 ### K Nearest neighbor ###:Non-parametric
 
@@ -389,15 +399,16 @@ mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
 # assess accuracy per species
 accKNN <- table(Atlas_wofossil_noTub_sub$species,predicted.classes)
 accKNN
-diag(prop.table(accKNN, 1))
-
+t <- diag(prop.table(accKNN, 1))
+t <-round(t, digits = 2)
+write.table(t, file = "Atlas linear KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 # Fossil predictions #
 
 library(class)
-KnnTestPrediction_k7 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
-                            Atlas_wofossil_noTub_sub$species, k=7, prob=TRUE)
-KnnTestPrediction_k7
+KnnTestPrediction_k9 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
+                            Atlas_wofossil_noTub_sub$species, k=9, prob=TRUE)
+KnnTestPrediction_k9
 
 KnnTestPrediction_k5 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
                             Atlas_wofossil_noTub_sub$species, k=5, prob=TRUE)
