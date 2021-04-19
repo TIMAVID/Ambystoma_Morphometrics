@@ -350,9 +350,27 @@ RFacc(T12.rf)
 RFacc(Sc.rf)
 
 # Look at variable importance
-round(importance(T1.rf), 2)
-varImpPlot(T1.rf)
 
+par(mfrow=c(5,1))
+
+round(importance(T1.rf), 2)
+p<- varImpPlot(T1.rf)
+
+round(importance(T4.rf), 2)
+o<-varImpPlot(T4.rf)
+
+round(importance(T8.rf), 2)
+q<- varImpPlot(T8.rf)
+
+round(importance(T12.rf), 2)
+r<- varImpPlot(T12.rf)
+
+round(importance(Sc.rf), 2)
+s<- varImpPlot(Sc.rf)
+
+mm<-cbind(p,o,q,r,s)
+mm<-round(mm,1)
+write.table(mm, file = "VarImp", sep = ",", quote = FALSE, row.names = T)
 
 ### Predict fossils ###
 
@@ -505,18 +523,35 @@ tree$tip.label<-gsub("^", "A.", tree$tip.label)
 plot(tree)
 
 #Subset tree to include only GMM species
-Amb_species<-unique(T8_sub$species)
+Amb_species<-unique(T8$species)
 tips<-tree$tip.label
 ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
 tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
 plotTree(tree,ftype="i")
 #Tree did not include A.mavortium so I lumped that species with A.tigrinum
-T8_sub_tig<- T8_sub
+T8_sub_tig<- T8
 T8_sub_tig$species<-gsub("A.mavortium", "A.tigrinum", T8_sub_tig$species, fixed = TRUE)
+T8_sub_tig$species<-gsub("A.subsalsum", "A.tigrinum", T8_sub_tig$species, fixed = TRUE)
 T8_sub_tig$species<-as.factor(T8_sub_tig$species)
 T8_sub_tig$species <- factor(T8_sub_tig$species, levels = 
                                              c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
-                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium")) # Reorder species
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum")) # Reorder species
+
+
+# tt <- (T8_sub_tig)
+# 
+# tt<- split(tt, T8_sub_tig$species)
+# 
+# test<- lapply(tt, function(x) x[!names(x)=="species"])
+# test<- unlist(test)
+# 
+# dim(test) <- c(7,1,nrow(T8_sub_tig))
+# 
+# names(test) <- (T8_sub_tig$species)
+# 
+# dimnames(test) <- list(1:7, "data", T8_sub_tig$species)
+# ss<- two.d.array(test)
+
 
 #Preformed a group PCA
 library(Morpho)
@@ -524,8 +559,10 @@ library(geomorph)
 gpca <- groupPCA(T8_sub_tig[,1:7], T8_sub_tig$species, rounds=0)
 plot(gpca$groupmeans)
 
+
+
 #Performed a Phylogenetic PCA based on group means
-phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = FALSE)
+phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = TRUE)
 summary(phylo.PCA)
 
 A_species<-attributes(gpca$groupmeans) #access attributes names
@@ -535,12 +572,21 @@ A_species <- factor(A_species, levels =
                       c("A.gracile", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum",
                         "A.mabeei","A.texanum","A.annulatum","A.tigrinum")) # Reorder species
 
+summary(phylo.PCA)
+sd <- phylo.PCA$sdev
+loadings <- phylo.PCA$rotation
+rownames(loadings) <- colnames(T8_sub_tig[c(1:7)])
+scores <- phylo.PCA$x
+
+biplot(scores[, 1:2], loadings[, 1:2], cex=0.9)
+
+
 #Plot phylogenetic PCA
-plot(phylo.PCA, phylo = TRUE, main = "phylo PCA", col=A_species)
+plot(phylo.PCA, phylo = TRUE, main = "Ambystoma phylo PCA")
 
 #Test for phylogenetic signal, uses Blomberg’s K to test for strength and significance of phylogenetic signal.
 physignal(gpca$groupmeans, tree, print.progress = F, iter = 999)
-
+?physignal
 #Phylogenetic generalized least squares
 
 avg_gdf<-geomorph.data.frame(coords=gpca$groupmeans, species=A_species) #make new geomorph dataframe with group mean coords

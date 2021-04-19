@@ -192,11 +192,11 @@ Amb_gdf_sub$species<-as.factor(Amb_gdf_sub$species)
 library(Morpho)
 gpca <- groupPCA(Amb_gdf_sub$coords, Amb_gdf_sub$species, rounds=0)
 plot(gpca$groupmeans)
-
+?groupPCA
 #Performed a Phylogenetic PCA based on group means
 phylo.PCA <- gm.prcomp(gpca$groupmeans, phy = tree, align.to.phy = FALSE)
 summary(phylo.PCA)
-
+?gm.prcomp
 A_species<-attributes(gpca$groupmeans) #access attributes names
 A_species<-(A_species$dimnames[[3]])
 A_species<-as.factor(A_species)
