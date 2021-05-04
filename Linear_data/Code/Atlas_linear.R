@@ -331,7 +331,7 @@ plot(dendroS, main='',sub='', xlab="",
      ylab='Mahalahobis distance')
 
 ### Random Forest ###:Non-parametric
-
+??randomForest
 library(randomForest)
 set.seed(123)
 Atlas.rf <- randomForest(species ~ M1 + M2 + M3 + M4 + M5 + M6, data=Atlas_wofossil_noTub_sub, importance=TRUE,
@@ -361,7 +361,7 @@ rf_acc_M1 <- 1-rf_acc_M1[,11] # percent correct classification
 rf_acc_M1
 mean(Atlas.rf_M1$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
 
-
+??randomForest
 # Predict fossils
 
 y_pred = predict(Atlas.rf, newdata = Atlas_fossil_complete[,2:7])
@@ -382,7 +382,7 @@ Atlas_wofossil_noTub_sub <- column_to_rownames(Atlas_wofossil_noTub_sub, var = "
 #make KNN model using LOOCV to find optimal k
 
 set.seed(123)
-
+?train
 KNNmodel <- train(
   species ~., data = Atlas_wofossil_noTub_sub, method = "knn",
   trControl = trainControl("LOOCV", number =1),
@@ -391,7 +391,7 @@ KNNmodel <- train(
 
 plot(KNNmodel) # plot accuracy vs k
 KNNmodel$bestTune # optimal k
-
+?predict
 predicted.classes <- KNNmodel %>% predict(Atlas_wofossil_noTub_sub[,1:6]) # predict class based on KNN model
 head(predicted.classes)
 mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
@@ -409,7 +409,7 @@ library(class)
 KnnTestPrediction_k9 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
                             Atlas_wofossil_noTub_sub$species, k=9, prob=TRUE)
 KnnTestPrediction_k9
-
+?knn
 KnnTestPrediction_k5 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_complete[,2:7],
                             Atlas_wofossil_noTub_sub$species, k=5, prob=TRUE)
 KnnTestPrediction_k5

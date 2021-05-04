@@ -139,7 +139,7 @@ Amb_anova <- procD.lm(coords ~ species,
                       data = Amb_gdf_sub, iter = 999, 
                       RRPP = TRUE, print.progress = FALSE)
 Amb_anova$aov.table
-
+?procD.lm
 plot(Amb_anova, type = "diagnostics", outliers = TRUE)
 
 # With size
