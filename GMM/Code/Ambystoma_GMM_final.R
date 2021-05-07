@@ -374,11 +374,11 @@ y_pred
 
 # AMBYSTOMA CLADE CLASSIFICATION #
 
-#KNN#
 species=GMM_data_sub$species
 clades <- recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Atlas_PC_scores_clade <- data.frame(Amb_PCA_sub$x,clades=clades)
 
+#KNN#
 set.seed(123)
 KNNmodel_clades <- train(
   clades ~., data = Atlas_PC_scores_clade, method = "knn",
@@ -457,7 +457,7 @@ mean(KnnTestPrediction_k5 == test_set$species) #overall accuracy
 ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
 
 library(HDMD)
-Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$species, digits = 10)
+Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$species, digits = 3)
 names = rownames(Mahala1$means) #capture labels
 
 mahala = sqrt(Mahala1$distance) #mahalanobis distance
