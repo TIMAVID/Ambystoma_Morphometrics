@@ -218,7 +218,7 @@ attributes(GMM_data_sub$land)$dimnames[[3]] <- specimens$specimenName
 
 
 
-# GENERALIZED PROCUSTES ANALYSIS ANALYSIS #
+# GENERALIZED PROCUSTES ANALYSIS #
 
 GPA_noFossil_landmarks <- gpagen(GMM_data_noFossil$land) # performs Generalized Procrustes analysis of landmarks and creates aligned Procrustes coordinates
 GPA_sub_landmarks <- gpagen(GMM_data_sub$land)
@@ -275,7 +275,7 @@ p
 
 
 
-### Statistical tests ###
+### STATISTICAL TESTS ###
 # *removed A. subsalsum and A. ordinarium* see code above for removal process
 
 ## ANOVA ##
