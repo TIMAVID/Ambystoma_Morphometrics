@@ -738,7 +738,7 @@ Mahala1SC = pairwise.mahalanobis(SCTotal[,1:7], SCTotal$species, digits = 3)
 Mah_DisSC <- Mah_Dis(Mahala1SC)
 
 trSC <- nj(Mah_DisSC) #neighbor joining
-
+?nj
 plot((as.phylo(trSC)),type="unrooted",cex=0.6,
      use.edge.length=TRUE,lab4ut="axial",
      no.margin=TRUE)# MIDDLE VERTEBRAE #
