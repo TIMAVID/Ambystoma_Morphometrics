@@ -3,7 +3,7 @@
 # Read in landmark tps file
 library(curl)
 library(geomorph)
-f <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/GMM/Data/tps_compiled_5_4_21.TPS")
+f <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/GMM/Data/Ambystoma_tps_compiled_5_4_21.TPS")
 raw_data <- readland.tps(f, specID = c("imageID")) # the function "readland.tps" reads the landmark data in tps format and returns a 3D array of the coordinate data
 plot(raw_data)
 head(raw_data)
@@ -15,7 +15,6 @@ head(specimenList)
 library(dplyr)
 species<-gsub("_.*","",specimenList$V2) #make a separate species vector
 s <-cbind(specimenList, species)
-
 
 
 
@@ -224,7 +223,7 @@ GPA_noFossil_landmarks <- gpagen(GMM_data_noFossil$land) # performs Generalized 
 GPA_sub_landmarks <- gpagen(GMM_data_sub$land)
 GPA_Fossil_landmarks <- gpagen(GMM_data_fossil$land)
 
-# CREATE DATAFRAMES 1) WITHOUT FOSSILS 2) WITHOUT FOSSILS & W/O A. SUBSALSUM AND A.ORDINARIUM 3) FOSSIL ONLY #
+# CREATE GMM DATAFRAMES 1) WITHOUT FOSSILS 2) WITHOUT FOSSILS & W/O A. SUBSALSUM AND A.ORDINARIUM 3) FOSSIL ONLY #
 GMM_data_noFossil <-geomorph.data.frame(coords=GPA_noFossil_landmarks$coords,
                                size=GPA_noFossil_landmarks$Csize, species=GMM_data_noFossil$species)
 GMM_data_noFossil$species <- factor(GMM_data_noFossil$species, levels = 
@@ -261,23 +260,24 @@ percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), 
 
 All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores the fossils
 
-speciescolors <- c("#666600", "#999900" ,"#99FFFF" ,"#FF9933" ,"#B266FF" ,"#1139BC", "#003BFD", "#00FD33", "#26B543", "#E50CF5", "#FF0909","#D71D1D", "#EC6A6A", "#8B0B0B", "#A54E4E")
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
+speciesshapes <- c(rep(16,15), rep(18,30))
 #plot
 library(ggplot2)
 library(ggforce)
-p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species)) +
+p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
-  scale_color_manual(name = "Species", values=c(speciescolors, "black", "black", "black", "black", "black")) + theme_classic()
+  scale_color_manual(name = "Species", breaks=levels(GMM_data_noFossil$species),  values=c(speciescolors, "black", "black", "black", "black", "black")) +
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic()
 p
-
 
 
 
 
 ### STATISTICAL TESTS ###
 # *removed A. subsalsum and A. ordinarium* see code above for removal process
-
+library(report)
 ## ANOVA ##
 
 #sample sizes
@@ -298,7 +298,6 @@ Amb_anova_size <- procD.lm(coords ~ species*log(size),
                            data = GMM_data_sub, iter = 1000, 
                            RRPP = TRUE, print.progress = FALSE)
 Amb_anova_size$aov.table
-
 plot(Amb_anova_size, type = "diagnostics", outliers = TRUE)
 
 #Post-hoc pairwise comparisons on ANOVA w/o Csize
@@ -306,6 +305,13 @@ plot(Amb_anova_size, type = "diagnostics", outliers = TRUE)
 gp <-  interaction(GMM_data_sub$species)
 PW <- pairwise(Amb_anova, groups = gp, covariate = NULL)
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+
+# t<- summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+# t <- t$pairwise.tables$P
+# t <- round(t, 3)
+# write.table(t, file = "GMMPW.txt", sep = ",", quote = FALSE, row.names = T)
+
+
 
 
 
@@ -320,34 +326,57 @@ Fossil_PC_scores2 <- as.data.frame(Amb_fossil_PCA2)
 
 Atlas_PC_scores <- data.frame(Amb_PCA_sub$x,species=GMM_data_sub$species)
 
-Atlas_PC_scores$ID <- seq.int(nrow(Atlas_PC_scores))
 
 library(caret)
+
+
+# LOOCV WITH REPLICATION
+library(foreach)
+library(doParallel)
+ncore <- detectCores()
+registerDoParallel(cores=ncore)
 set.seed(123)
 
-KNNmodel <- train(
-  species ~., data = Atlas_PC_scores, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  tuneLength = 10)
+runs <- 3
 
-plot(KNNmodel) # plot accuracy vs k
-KNNmodel$bestTune # optimal k
+# system.time({
+#   fish <- foreach(icount(runs)) %dopar% {
+#     train(species~ .,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Atlas_PC_scores)$results
+#   }
+# })
 
-predicted.classes <- KNNmodel %>% predict(Atlas_PC_scores[,1:16]) # predict class based on KNN model
-head(predicted.classes)
-mean(predicted.classes == Atlas_PC_scores$species) #overall accuracy
 
-accKNN <- table(Atlas_PC_scores$species,predicted.classes)
+
+fish <- map_dfr(fish,`[`, c("k", "Accuracy", "Kappa"))
+
+
+set.seed(123)
+predicted.classes <- train(species~ .,
+                                     method     = "knn",
+                                     tuneGrid   = expand.grid(k = 5),
+                                     trControl  = trainControl(method  = "LOOCV"),
+                                     metric     = "Accuracy",
+                                     data       = Atlas_PC_scores)$pred # predict class based on KNN model
+
+mean(predicted.classes$pred == predicted.classes$obs) #overall accuracy
+
+accKNN <- table(predicted.classes$obs,predicted.classes$pred)
 accKNN
+# t <- diag(prop.table(accKNN, 1))
+# t <- round(t, 2)
+# write.table(t, file = "GMM KNNspeciesAcc.txt", sep = ",", quote = FALSE, row.names = T)
+
 
 # FOSSIL CLASSIFICATION #
 
-library(class)
-KnnTestPrediction_k13 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
-                            Atlas_PC_scores$species, k=13, prob=TRUE)
-KnnTestPrediction_k13
-
-
+KnnTestPrediction_k5 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores$species, k=5, prob=TRUE)
+KnnTestPrediction_k5
 
 
 
@@ -360,6 +389,9 @@ print(Atlas.rf)
 rf_acc <- Atlas.rf$confusion
 rf_acc <- 1-rf_acc[,14] # percent correct classification
 rf_acc
+# t <- rf_acc
+# t <-round(t, digits = 2)
+# write.table(t, file = "Atlas GMM RFAC", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf$predicted == Atlas_PC_scores$species) #overall accuracy
 
@@ -375,25 +407,46 @@ y_pred
 # AMBYSTOMA CLADE CLASSIFICATION #
 
 species=GMM_data_sub$species
-clades <- recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+clades <- dplyr::recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Atlas_PC_scores_clade <- data.frame(Amb_PCA_sub$x,clades=clades)
+
+#sample sizes
+Atlas_PC_scores_clade %>%
+  dplyr::group_by(clades) %>%
+  dplyr::summarise(N = n())
 
 #KNN#
 set.seed(123)
-KNNmodel_clades <- train(
-  clades ~., data = Atlas_PC_scores_clade, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  tuneLength = 10)
+# system.time({
+#   fishclade <- foreach(icount(runs)) %dopar% {
+#     caret::train(clades~ .,
+#                  method     = "knn",
+#                  tuneGrid   = expand.grid(k = 1:35),
+#                  trControl  = caret::trainControl(method  = "LOOCV"),
+#                  metric     = "Accuracy",
+#                  data       = Atlas_PC_scores_clade)$results
+#   }
+# })
 
-plot(KNNmodel_clades) # plot accuracy vs k
-KNNmodel_clades$bestTune # optimal k
+fishclade <- map_dfr(fishclade,`[`, c("k", "Accuracy", "Kappa"))
 
-predicted.clades <- KNNmodel_clades %>% predict(Atlas_PC_scores_clade[,1:16]) # predict class based on KNN model
-head(predicted.clades)
-mean(predicted.clades == Atlas_PC_scores_clade$clades) #overall accuracy
 
-accKNN_clades <- table(Atlas_PC_scores_clade$clades,predicted.clades)
+set.seed(123)
+predicted.clades <- train(clades~ .,
+                                           method     = "knn",
+                                           tuneGrid   = expand.grid(k = 8),
+                                           trControl  = caret::trainControl(method  = "LOOCV"),
+                                           metric     = "Accuracy",
+                                           data       = Atlas_PC_scores_clade)$pred # predict class based on KNN model
+mean(predicted.clades$pred == predicted.clades$obs) #overall accuracy
+
+accKNN_clades <- table(predicted.clades$obs,predicted.clades$pred)
 accKNN_clades
+
+# t <- diag(prop.table(accKNN_clades, 1))
+# t <- round(t, 2)
+# write.table(t, file = "GMMKNNcladesAcc.txt", sep = ",", quote = FALSE, row.names = T)
+
 
 # FOSSIL CLASSIFICATION #
 
@@ -413,42 +466,15 @@ print(Atlas.rf_clades)
 rf_acc_clades <- Atlas.rf_clades$confusion
 rf_acc_clades <- 1-rf_acc_clades[,9] # percent correct classification
 rf_acc_clades
+# t <- rf_acc_clades
+# t <-round(t, digits = 2)
+# write.table(t, file = "Atlas GMM RFAC clades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_clades$predicted == Atlas_PC_scores_clade$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
 y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16])
 y_pred_clade
-
-
-
-
-
-
-# TEST WITH NUMBER OF SPECIMENS PER SPECIES EQUAL #
-
-library(groupdata2)
-library(dplyr)
-library(ggplot2)
-library(knitr) # kable()
-
-set.seed(123) # For reproducibility
-
-train_set <- balance(Atlas_PC_scores, 5, cat_col = "species") # 5 specimens per species
-test_set <- Atlas_PC_scores[-train_set$ID, ] # test sample
-train_set <- subset(train_set, select=-c(ID)) #remove ID column
-test_set <- subset(test_set, select=-c(ID))
-
-
-KnnTestPrediction_k5 <- knn(train_set[,1:16], test_set[,1:16],
-                            train_set$species, k=5, prob=TRUE)
-
-accKNN_euqal <- table(test_set$species,KnnTestPrediction_k5)
-accKNN_euqal
-
-mean(KnnTestPrediction_k5 == test_set$species) #overall accuracy
-
-
 
 
 
@@ -484,5 +510,35 @@ plot((as.phylo(tr)),type="unrooted",cex=0.6,
      use.edge.length=TRUE,lab4ut="axial",
      no.margin=TRUE)
 
+
+
+
+
+
+
+
+# # TEST WITH NUMBER OF SPECIMENS PER SPECIES EQUAL #
+# Atlas_PC_scores$ID <- seq.int(nrow(Atlas_PC_scores))
+# library(groupdata2)
+# library(dplyr)
+# library(ggplot2)
+# library(knitr) # kable()
+# 
+# set.seed(123) # For reproducibility
+# 
+# train_set <- balance(Atlas_PC_scores, 5, cat_col = "species") # 5 specimens per species
+# test_set <- Atlas_PC_scores[-train_set$ID, ] # test sample
+# train_set <- subset(train_set, select=-c(ID)) #remove ID column
+# test_set <- subset(test_set, select=-c(ID))
+# 
+# 
+# KnnTestPrediction_k5 <- knn(train_set[,1:16], test_set[,1:16],
+#                             train_set$species, k=5, prob=TRUE)
+# 
+# accKNN_euqal <- table(test_set$species,KnnTestPrediction_k5)
+# accKNN_euqal
+# 
+# mean(KnnTestPrediction_k5 == test_set$species) #overall accuracy
+# 
 
 

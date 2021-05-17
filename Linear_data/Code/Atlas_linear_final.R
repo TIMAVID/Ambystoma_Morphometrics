@@ -52,14 +52,16 @@ All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe wit
 tail(All_PC_scores)
 
 # PLOT #
-speciescolors <- c("#666600", "#999900" ,"#99FFFF" ,"#FF9933" ,"#B266FF" ,"#1139BC", "#003BFD", "#00FD33", "#26B543", "#E50CF5", "#FF0909","#D71D1D", "#EC6A6A", "#8B0B0B", "#A54E4E")
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
+speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
 library(ggforce)
-p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species)) +
+p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
-  scale_color_manual(name = "Species", values=c(speciescolors, "black", "black", "black", "black", "black")) + theme_classic()
+  scale_color_manual(name = "Species", breaks=levels(PC_scores$species), values=c(speciescolors, "black", "black", "black", "black", "black")) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic()
 p
 
 
@@ -95,27 +97,34 @@ library(RVAideMemoire)
 require(vegan)
 
 #Permutational Multivariate Analysis of Variance Using Euclidean Distance Matrices
-adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,method="mahalanobis") 
+system.time(adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,method="euclidean", parallel = 8)) 
 
 #pairwise comparisons between group levels with corrections for multiple testing
 set.seed(123)
-pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=50, progress = FALSE) #needs more permutation but takes a long time
-# t <- AtlasPPM$p.value
+ppMANOVA<-pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=50, progress = FALSE) #needs more permutation but takes a long time
+ppEMANOVA <- pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999)
+# t <- ppMANOVA$p.value
 # t <-round(t, digits = 3)
-# write.table(t, file = "Atlas linear PW", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "Atlas linear PWMAN", sep = ",", quote = FALSE, row.names = T)
 
 
 # TUBERCULUM INTERGLENOIDEUM Permutational ANOVA #
+Tub_dat <- dplyr::filter(Tub_dat, !grepl('A.subsalsum|A.ordinarium', species))
+Tub_dat$species <- factor(Tub_dat$species, levels = 
+                                             c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.velasci")) # Reorder species levels
+
 set.seed(123)
 perm.anova(Tub_dat$tub_interglen_extension ~ Tub_dat$species, nperm=1000)
 #pairwise comparisons between group levels with corrections for multiple testing
 library(rcompanion)
 pairwisePermutationTest(tub_interglen_extension ~ species, data = Tub_dat, method = "fdr")
 
-pairwise.perm.t.test(Tub_dat$tub_interglen_extension,Tub_dat$species,nperm=999,progress = FALSE)
+t <-pairwise.perm.t.test(Tub_dat$tub_interglen_extension,Tub_dat$species,nperm=999,progress = FALSE)
+
 # t <- t$p.value
 # t <- round(t, 3)
-# write.table(t, file = "Tub PW", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "TubInterglen PW", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -124,28 +133,54 @@ pairwise.perm.t.test(Tub_dat$tub_interglen_extension,Tub_dat$species,nperm=999,p
 ### K NEAREST NEIGHBOR   ###:Non-parametric
 library(caret)
 
+
+# LOOCV WITH REPLICATION
+library(foreach)
+library(doParallel)
+ncore <- detectCores()
+registerDoParallel(cores=ncore)
+
 set.seed(123)
-KNNmodel <- train(
-  species ~., data = Atlas_wofossil_noTub_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =100),
-  tuneLength = 10)
 
-plot(KNNmodel) # plot accuracy vs k
-KNNmodel$bestTune # optimal k
+runs <- 100
 
-predicted.classes <- KNNmodel %>% predict(Atlas_wofossil_noTub_sub[,1:6]) # predict class based on KNN model
-head(predicted.classes)
-mean(predicted.classes == Atlas_wofossil_noTub_sub$species) #overall accuracy
+# system.time({
+#   fish <- foreach(icount(runs)) %dopar% {
+#     train(species~ .,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Atlas_wofossil_noTub_sub)$results
+#   }
+# })
 
-accKNN <- table(Atlas_wofossil_noTub_sub$species,predicted.classes)
+fish <- map_dfr(fish,`[`, c("k", "Accuracy", "Kappa"))
+kspecies <- fish %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kspecies <- kspecies[1,]
+
+
+
+library(class)
+set.seed(123)
+predicted.classes <- train(species~ .,
+                                     method     = "knn",
+                                     tuneGrid   = expand.grid(k = 6),
+                                     trControl  = trainControl(method  = "LOOCV"),
+                                     metric     = "Accuracy",
+                                     data       = Atlas_wofossil_noTub_sub)$pred # predict class based on KNN model
+mean(predicted.classes$pred == predicted.classes$obs) #overall accuracy
+
+accKNN <- table(predicted.classes$obs,predicted.classes$pred)
 accKNN
 # t <- diag(prop.table(accKNN, 1))
 # t <-round(t, digits = 2)
-#write.table(t, file = "Atlas linear KNNAC", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "Atlas linear species KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 # FOSSIL CLASSIFICATION #
 
-library(class)
 KnnTestPrediction_k15 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_noTub[,1:6],
                              Atlas_wofossil_noTub_sub$species, k=15, prob=TRUE)
 KnnTestPrediction_k15
@@ -162,6 +197,9 @@ print(Atlas.rf)
 rf_acc <- Atlas.rf$confusion
 rf_acc <- 1-rf_acc[,14] # percent correct classification
 rf_acc
+# t <- rf_acc
+# t <-round(t, digits = 2)
+# write.table(t, file = "Atlas linear RFAC", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
 
@@ -177,25 +215,45 @@ y_pred
 # AMBYSTOMA CLADE CLASSIFICATION #
 
 species <- Atlas_wofossil_noTub_sub$species
-clades <- recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+clades <- dplyr::recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Atlas_wofossil_noTub_sub_clade <- data.frame(Atlas_wofossil_noTub_sub[,1:6],clades=clades)
 
 #KNN#
 set.seed(123)
-KNNmodel_clades <- train(
-  clades ~., data = Atlas_wofossil_noTub_sub_clade, method = "knn",
-  trControl = trainControl("LOOCV", number =100),
-  tuneLength = 10)
 
-plot(KNNmodel_clades) # plot accuracy vs k
-KNNmodel_clades$bestTune # optimal k
+# system.time({
+#   fish2 <- foreach(icount(runs)) %dopar% {
+#     train(clades~ .,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Atlas_wofossil_noTub_sub_clade)$results
+#   }
+# })
 
-predicted.clades <- KNNmodel_clades %>% predict(Atlas_wofossil_noTub_sub_clade[,1:6]) # predict class based on KNN model
-head(predicted.clades)
-mean(predicted.clades == Atlas_wofossil_noTub_sub_clade$clades) #overall accuracy
 
-accKNN_clades <- table(Atlas_wofossil_noTub_sub_clade$clades,predicted.clades)
+fish2 <- map_dfr(fish2,`[`, c("k", "Accuracy", "Kappa"))
+kclade <- fish2 %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kclade <- kclade[1,]
+
+set.seed(123)
+predicted.clades <- train(clades~ .,
+                                    method     = "knn",
+                                    tuneGrid   = expand.grid(k = 9),
+                                    trControl  = trainControl(method  = "LOOCV"),
+                                    metric     = "Accuracy",
+                                    data       = Atlas_wofossil_noTub_sub_clade)$pred # predict class based on KNN model
+mean(predicted.clades$pred == predicted.clades$obs) #overall accuracy
+
+accKNN_clades <- table(predicted.clades$obs,predicted.clades$pred)
 accKNN_clades
+# t <- diag(prop.table(accKNN_clades, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Atlas linear clades KNNAC", sep = ",", quote = FALSE, row.names = T)
+
 
 # FOSSIL CLADE CLASSIFICATION #
 
@@ -215,6 +273,9 @@ print(Atlas.rf_clades)
 rf_acc_clades <- Atlas.rf_clades$confusion
 rf_acc_clades <- 1-rf_acc_clades[,9] # percent correct classification
 rf_acc_clades
+# t <- rf_acc_clades
+# t <-round(t, digits = 2)
+# write.table(t, file = "Atlas linear RFACclades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_clades$predicted == Atlas_wofossil_noTub_sub_clade$clades) #overall accuracy
 
@@ -296,7 +357,7 @@ create_crfplot <- function(rf, conditional = TRUE){
     theme(axis.title.x = element_text(size = 15, color = "black"),
           axis.title.y = element_blank(),
           axis.text.x  = element_text(size = 15, color = "black"),
-          axis.text.y  = element_text(size = 15, color = "black")) 
+          axis.text.y  = element_text(size = 15, color = "black")) + theme_classic()
   return(p)
 }
 

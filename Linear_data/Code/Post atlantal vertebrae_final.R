@@ -15,7 +15,7 @@ PoAtVerts <-  Amb_linear_data[c(6:7, 14:48, 54:55)] #select only relevant Post a
 # REMOVE FOSSILS #
 PoAtVerts_wofossil <- dplyr::filter(PoAtVerts, !grepl('41229*', species)) # remove fossils
 row.names(PoAtVerts_wofossil) <- PoAtVerts_wofossil$specimen_num
-PoAtVerts_wofossil <- subset(PoAtVerts_wofossil, select=-c(specimen_num))
+# PoAtVerts_wofossil <- subset(PoAtVerts_wofossil, select=-c(specimen_num))
 PoAtVerts_wofossil <- droplevels(PoAtVerts_wofossil)
 PoAtVerts_wofossil$species <- factor(PoAtVerts_wofossil$species, levels = 
                                             c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
@@ -30,6 +30,7 @@ T1 <- dplyr::select(PoAtVerts_wofossil, contains("a", ignore.case = FALSE),  con
 T4 <- dplyr::select(PoAtVerts_wofossil, contains("b", ignore.case = FALSE), contains("species")) %>% drop_na()
 
 T8 <- dplyr::select(PoAtVerts_wofossil, contains("c", ignore.case = FALSE), contains("species")) %>% drop_na()
+T8 <- subset(T8, select=-c(specimen_num))
 
 T8_extension <- dplyr::select(PoAtVerts_wofossil, contains("Cen"), contains("species")) %>% drop_na()
 
@@ -99,7 +100,7 @@ ZySummary$species <- factor(ZySummary$species, levels =
                                        c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
                                          "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", "A.velasci")) # Reorder species levels
 
-speciescolors <- c("#666600", "#999900" ,"#99FFFF" ,"#FF9933" ,"#B266FF" ,"#1139BC", "#003BFD", "#00FD33", "#26B543", "#E50CF5", "#FF0909","#D71D1D", "#EC6A6A", "#8B0B0B", "#A54E4E")
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
 
 ZyPlot <- ggplot(ZySummary, aes(x=variable, y=mean, group=species, color=species)) + 
   geom_errorbar(aes(ymin=min, ymax=max), width=.1, position=position_dodge(0.15)) +
@@ -107,10 +108,7 @@ ZyPlot <- ggplot(ZySummary, aes(x=variable, y=mean, group=species, color=species
   scale_color_manual(name = "Species", values=c(speciescolors)) + theme_minimal() + xlab("Vertebra") + ylab("Zygapoheseal ratio") 
 ZyPlot <- ZyPlot + facet_wrap(~species, ncol = 15)  # wrap data 'by' family into 4 columns
 ZyPlot + scale_x_discrete(breaks=c("Zyratioa","Zyratiob","Zyratioc", "Zyratiod", "ZyratioSc"),
-                           labels=c("T1", "T4", "T8", "T12", "SC"))
-ZyPlot <- ZyPlot + theme(legend.position = "none")
-
-
+                           labels=c("1", "4", "8", "12", "Sc")) + theme(legend.position = "bottom")
 
 
 
@@ -177,60 +175,60 @@ CenPlot <- ggplot(CENSummary, aes(x=variable, y=mean, group=species, color=speci
   scale_color_manual(name = "Species", values=c(speciescolors)) + theme_minimal() + xlab("Vertebra") + ylab("Centrum ratio") 
 CenPlot <- CenPlot + facet_wrap(~species, ncol = 15)  # wrap data 'by' family into 4 columns
 CenPlot + scale_x_discrete(breaks=c("Cenratioa","Cenratiob","Cenratioc", "Cenratiod", "CenratioSc"),
-                          labels=c("T1", "T4", "T8", "T12", "SC"))
+                           labels=c("1", "4", "8", "12", "Sc")) + theme(legend.position = "bottom")
 
 
 
 
 
 
-## Phylogenetic signal ##
-
-# Load in data #
-require(phytools)
-
-f3 <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/GMM/Data/Amb_species")
-
-# Read in tree
-
-tree <- read.newick(f3)  #tree from Williams et al. 2013
-
-par(mar=c(1,1,1,1))
-tree$tip.label<-gsub("^", "A.", tree$tip.label)
-plot(tree)
-
-#Subset tree to include only GMM species
-Amb_species<-unique(T8$species)
-tips<-tree$tip.label
-ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
-tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
-plotTree(tree,ftype="i")
-
-#Tree did not include A.mavortium so I lumped that species with A.tigrinum
-T8_sub_tig<- ZySummary
-T8_sub_tig$species<-gsub("A.mavortium", "A.tigrinum", T8_sub_tig$species, fixed = TRUE)
-T8_sub_tig$species<-gsub("A.subsalsum", "A.ordinarium", T8_sub_tig$species, fixed = TRUE)
-T8_sub_tig$species<-gsub("A.velasci", "A.ordinarium", T8_sub_tig$species, fixed = TRUE)
-T8_sub_tig$species<-as.factor(T8_sub_tig$species)
-T8_sub_tig$species <- factor(T8_sub_tig$species, levels = 
-                               c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
-                                 "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.ordinarium")) # Reorder species
-T8_sub_tig <- T8_sub_tig %>% 
-  dplyr::filter(grepl("Zyratioc", variable)) %>% 
-  dplyr::group_by(species) %>%
-  dplyr::summarise(Zymean = mean(mean))
-
-library(geomorph)
-test <- (T8_sub_tig$mean)
-names <- T8_sub_tig$species
-setNames(test, T8_sub_tig$species)
-
-test$dimnames[[1]] <- as.character(names)
-
-physignal(T8_sub_tig$mean, tree, print.progress = F, iter = 999)
-
-
-names(T8_sub_tig$mean)
+# ## Phylogenetic signal ##
+# 
+# # Load in data #
+# require(phytools)
+# 
+# f3 <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/GMM/Data/Amb_species")
+# 
+# # Read in tree
+# 
+# tree <- read.newick(f3)  #tree from Williams et al. 2013
+# 
+# par(mar=c(1,1,1,1))
+# tree$tip.label<-gsub("^", "A.", tree$tip.label)
+# plot(tree)
+# 
+# #Subset tree to include only GMM species
+# Amb_species<-unique(T8$species)
+# tips<-tree$tip.label
+# ii<-sapply(Amb_species,function(x,y) grep(x,y)[1],y=tips)
+# tree<-drop.tip(tree,setdiff(tree$tip.label,tips[ii]))
+# plotTree(tree,ftype="i")
+# 
+# #Tree did not include A.mavortium so I lumped that species with A.tigrinum
+# T8_sub_tig<- ZySummary
+# T8_sub_tig$species<-gsub("A.mavortium", "A.tigrinum", T8_sub_tig$species, fixed = TRUE)
+# T8_sub_tig$species<-gsub("A.subsalsum", "A.ordinarium", T8_sub_tig$species, fixed = TRUE)
+# T8_sub_tig$species<-gsub("A.velasci", "A.ordinarium", T8_sub_tig$species, fixed = TRUE)
+# T8_sub_tig$species<-as.factor(T8_sub_tig$species)
+# T8_sub_tig$species <- factor(T8_sub_tig$species, levels = 
+#                                c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+#                                  "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.ordinarium")) # Reorder species
+# T8_sub_tig <- T8_sub_tig %>% 
+#   dplyr::filter(grepl("Zyratioc", variable)) %>% 
+#   dplyr::group_by(species) %>%
+#   dplyr::summarise(Zymean = mean(mean))
+# 
+# library(geomorph)
+# test <- (T8_sub_tig$mean)
+# names <- T8_sub_tig$species
+# setNames(test, T8_sub_tig$species)
+# 
+# test$dimnames[[1]] <- as.character(names)
+# 
+# physignal(T8_sub_tig$mean, tree, print.progress = F, iter = 999)
+# 
+# 
+# names(T8_sub_tig$mean)
 
 
 
@@ -336,6 +334,7 @@ All_AntPC_scores <- (rbind(Antscores, FossilAnt_PC_scores)) # create a new dataf
 # PLOT #
 
 fossilcolors <- grDevices::gray.colors(54, start = 0, end = 0)
+speciesshapes <- c(rep(16,15), rep(18,50))
 
 library(ggplot2)
 library(ggforce)
@@ -343,10 +342,11 @@ library(ggforce)
 percentage_ant <- round(TrunkAnt.pca$sdev / sum(TrunkAnt.pca$sdev) * 100, 2)# find percentage variance explained by PC's
 percentage_ant <- paste( colnames(Antscores), "(", paste( as.character(percentage_ant), "%", ")", sep="") )
 
-Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
+Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =2)+ xlab(percentage_ant[1]) + ylab(percentage_ant[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors, fossilcolors)) + theme_classic() + ggtitle("Anterior Vertebrae")
+  scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors, fossilcolors)) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Anterior Vertebrae") + theme(legend.position = "none")
 Ant_plot
 
 
@@ -367,10 +367,11 @@ percentage_mid <- round(TrunkMid.pca$sdev / sum(TrunkMid.pca$sdev) * 100, 2)# fi
 percentage_mid <- paste( colnames(MIDscores), "(", paste( as.character(percentage_mid), "%", ")", sep="") )
 
 # PLOT #
-Mid_plot<-ggplot(All_MIDPC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
+Mid_plot<-ggplot(All_MIDPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =2)+ xlab(percentage_mid[1]) + ylab(percentage_mid[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkMid$species), values=c(speciescolors, fossilcolors)) + theme_classic() + ggtitle("Middle Vertebrae")
+  scale_color_manual(name = "Species", breaks=levels(TrunkMid$species), values=c(speciescolors, fossilcolors)) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') +theme_classic() + ggtitle("Middle Vertebrae")+ theme(legend.position = "none")
 Mid_plot
 
 
@@ -391,10 +392,11 @@ percentage_post <- round(TrunkPost.pca$sdev / sum(TrunkPost.pca$sdev) * 100, 2)#
 percentage_post <- paste( colnames(POSTscores), "(", paste( as.character(percentage_post), "%", ")", sep="") )
 
 # PLOT #
-Post_plot<-ggplot(All_POSTPC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
+Post_plot<-ggplot(All_POSTPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =2)+ xlab(percentage_post[1]) + ylab(percentage_post[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkPost$species), values=c(speciescolors, fossilcolors)) + theme_classic() + ggtitle("Posterior Vertebrae")
+  scale_color_manual(name = "Species", breaks=levels(TrunkPost$species), values=c(speciescolors, fossilcolors)) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Posterior Vertebrae")+ theme(legend.position = "none")
 Post_plot
 
 
@@ -416,10 +418,11 @@ percentage_Sc <- round(Sc.pca$sdev / sum(Sc.pca$sdev) * 100, 2)# find percentage
 percentage_Sc <- paste( colnames(SCscores), "(", paste( as.character(percentage_Sc), "%", ")", sep="") )
 
 # PLOT #
-Sc_plot<-ggplot(All_SCPC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
+Sc_plot<-ggplot(All_SCPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =2)+ xlab(percentage_Sc[1]) + ylab(percentage_Sc[2]) +
-  scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors, fossilcolors)) + theme_classic() + ggtitle("Sacral Vertebrae")
+  scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors, fossilcolors)) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') +theme_classic() + ggtitle("Sacral Vertebrae")+ theme(legend.position = "none")
 Sc_plot
 
 
@@ -437,18 +440,16 @@ gridExtra::grid.arrange(Ant_plot, Mid_plot ,Post_plot,Sc_plot,nrow = 2)
 library(EnvStats)
 T8_extension
 
-T8_extension<-mutate(T8_extension ,ratio = Cen_to_NeuAr/Cen_to_PoZy, .before = Cen_to_PoZy) #add new column for ratio
+T8_extension<-dplyr::mutate(T8_extension ,ratio = Cen_to_NeuAr/Cen_to_PoZy, .before = Cen_to_PoZy) #add new column for ratio
 
 library(tidyr)
 data_long <- gather(T8_extension, Type , Measurement, Cen_to_NeuAr:Cen_to_PoZy, factor_key=TRUE) #convert to long format
 
 library(ggplot2)
-s <- ggplot(data_long, aes(species, Measurement, fill = Type)) + geom_boxplot(position = "dodge") + theme_classic() + ylab("Value") +
+s <- ggplot(data_long, aes(species, Measurement, fill = Type)) + 
+  geom_boxplot(position = "dodge") + theme_classic() + ylab("Value") +
   theme(legend.position="bottom") + scale_fill_discrete(name = "Measurement Type", labels= c("NSPE", "NSPE/PoZyPE", "PoZyPE"))
 s
-
-
-
 
 
 # Assess sample size per species
@@ -489,89 +490,166 @@ library(caret)
 #make KNN model using LOOCV to find optimal k
 
 # SACRAL VERTEBRAE #
+
+
+# LOOCV WITH REPLICATION
+library(foreach)
+library(doParallel)
+ncore <- detectCores()
+registerDoParallel(cores=ncore)
+
 set.seed(123)
-KNNmodel_sc <- train(
-  species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data = TrunkSc_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 1
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkSc_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
 
-plot(KNNmodel_sc) # plot accuracy vs k
-KNNmodel_sc$bestTune # optimal k
+fishSc <- map_dfr(fishSc,`[`, c("k", "Accuracy", "Kappa"))
+kfishSc <- fishSc %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishSc <- kfishSc[1,] # k with highest accuracy
 
-predicted.classes_sc <- KNNmodel_sc %>% predict(TrunkSc_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_sc)
-mean(predicted.classes_sc == TrunkSc_sub$species) #overall accuracy
 
-# assess accuracy per species
-accKNN_sc <- table(TrunkSc_sub$species,predicted.classes_sc)
-accKNN_sc
-diag(prop.table(accKNN_sc, 1))
+set.seed(123)
+predicted.classes_sc <- train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+            method     = "knn",
+            tuneGrid   = expand.grid(k = 3),
+            trControl  = trainControl(method  = "LOOCV"),
+            metric     = "Accuracy",
+            data       = TrunkSc_sub)$pred # predict class based on KNN model
+mean(predicted.classes_sc$pred == predicted.classes_sc$obs) #overall accuracy
+
+accKNNsc <- table(predicted.classes_sc$obs,predicted.classes_sc$pred)
+accKNNsc
+# t <- diag(prop.table(accKNNsc, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Sacral species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
 
 
 # POSTERIOR VERTEBRAE #
 set.seed(123)
-KNNmodel_post <- train(
-  species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkPost_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 100
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkPost_sub)$results
+#   }
+# })
 
-plot(KNNmodel_post) # plot accuracy vs k
-KNNmodel_post$bestTune # optimal k
+fishpost <- map_dfr(fishpost,`[`, c("k", "Accuracy", "Kappa"))
+kfishpost <- fishpost %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishpost <- kfishpost[1,]
 
-predicted.classes_post <- KNNmodel_post %>% predict(TrunkPost_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_post)
-mean(predicted.classes_post == TrunkPost_sub$species) #overall accuracy
+set.seed(123)
+predicted.classes_post <- train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                          method     = "knn",
+                                          tuneGrid   = expand.grid(k = 1),
+                                          trControl  = trainControl(method  = "LOOCV"),
+                                          metric     = "Accuracy",
+                                          data       = TrunkPost_sub)$pred # predict class based on KNN model
+mean(predicted.classes_post$pred == predicted.classes_post$obs) #overall accuracy
 
-# assess accuracy per species
-accKNN_post <- table(TrunkPost_sub$species,predicted.classes_post)
-accKNN_post
-diag(prop.table(accKNN_post, 1))
+accKNNpost <- table(predicted.classes_post$obs,predicted.classes_post$pred)
+accKNNpost
+# t <- diag(prop.table(accKNNpost, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Posterior trunk linear species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
+
+
 
 
 # MIDDLE VERTEBRAE #
 set.seed(123)
-KNNmodel_mid <- train(
-  species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkMid_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 100
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkMid_sub)$results
+#   }
+# })
 
-plot(KNNmodel_mid) # plot accuracy vs k
-KNNmodel_mid$bestTune # optimal k
+fishmid <- map_dfr(fishmid,`[`, c("k", "Accuracy", "Kappa"))
+kfishmid <- fishmid %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishmid <- kfishmid[1,]
 
-predicted.classes_mid <- KNNmodel_mid %>% predict(TrunkMid_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_mid)
-mean(predicted.classes_mid == TrunkMid_sub$species) #overall accuracy
+set.seed(123)
+predicted.classes_mid <- train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                         method     = "knn",
+                                         tuneGrid   = expand.grid(k = 1),
+                                         trControl  = trainControl(method  = "LOOCV"),
+                                         metric     = "Accuracy",
+                                         data       = TrunkMid_sub)$pred # predict class based on KNN model
+mean(predicted.classes_mid$pred == predicted.classes_mid$obs) #overall accuracy
 
-# assess accuracy per species
-accKNN_mid <- table(TrunkMid_sub$species,predicted.classes_mid)
-accKNN_mid
-diag(prop.table(accKNN_mid, 1))
+accKNNmid <- table(predicted.classes_mid$obs,predicted.classes_mid$pred)
+accKNNmid
+# t <- diag(prop.table(accKNNmid, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Middle trunk linear species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
 
 
 # ANTERIOR VERTEBRAE #
 set.seed(123)
-KNNmodel_ant <- train(
-  species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkAnt_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 100
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkAnt_sub)$results
+#   }
+# })
 
-plot(KNNmodel_ant) # plot accuracy vs k
-KNNmodel_ant$bestTune # optimal k
+fishant <- map_dfr(fishant,`[`, c("k", "Accuracy", "Kappa"))
+kfishant <- fishant %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishant <- kfishant[1,]
 
-predicted.classes_ant <- KNNmodel_ant %>% predict(TrunkAnt_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_ant)
-mean(predicted.classes_ant == TrunkAnt_sub$species) #overall accuracy
+set.seed(123)
+predicted.classes_ant <- train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                         method     = "knn",
+                                         tuneGrid   = expand.grid(k = 3),
+                                         trControl  = trainControl(method  = "LOOCV"),
+                                         metric     = "Accuracy",
+                                         data       = TrunkAnt_sub)$pred # predict class based on KNN model
+mean(predicted.classes_ant$pred == predicted.classes_ant$obs) #overall accuracy
 
-# assess accuracy per species
-accKNN_ant <- table(TrunkAnt_sub$species,predicted.classes_ant)
-accKNN_ant
-diag(prop.table(accKNN_ant, 1))
-
-
+accKNNant <- table(predicted.classes_ant$obs,predicted.classes_ant$pred)
+accKNNant
+# t <- diag(prop.table(accKNNant, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Anterior verts linear species KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -581,7 +659,7 @@ library(class)
 # ANTERIOR FOSSILS #
 
 KnnAntPrediction <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
-                           TrunkAnt_sub$species, k=KNNmodel_ant$bestTune , prob=TRUE)
+                           TrunkAnt_sub$species, k= 3, prob=TRUE)
 KnnAntPrediction
 
 # t <- cbind(as.character(TrunkFossilAnt$species), as.character(KnnAntPrediction_k7), as.character(attr(KnnAntPrediction_k7, 'prob')))
@@ -593,19 +671,19 @@ KnnAntPrediction
 
 # MIDDLE FOSSILS #
 KnnMidPrediction <- knn(TrunkMid_sub[,1:7], TrunkFossilT8[,1:7],
-                           TrunkMid_sub$species, k=KNNmodel_mid$bestTune, prob=TRUE)
+                           TrunkMid_sub$species, k=1, prob=TRUE)
 KnnMidPrediction
 
 
 # POSTERIOR FOSSILS #
 KnnPostPrediction <- knn(TrunkPost_sub[,1:7], TrunkFossilT12[,1:7],
-                            TrunkPost_sub$species, k=KNNmodel_post$bestTune, prob=TRUE)
+                            TrunkPost_sub$species, k=1, prob=TRUE)
 KnnPostPrediction
 
 
 # SACRAL VERTEBRAE FOSSILS #
 KnnPostPrediction <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
-                            TrunkSc_sub$species, k=KNNmodel_sc$bestTune, prob=TRUE)
+                            TrunkSc_sub$species, k=3, prob=TRUE)
 KnnPostPrediction
 
 
@@ -624,7 +702,13 @@ rf_acc_ant <- Atlas.rf_ant$confusion
 rf_acc_ant <- 1-rf_acc_ant[,14] # percent correct classification
 rf_acc_ant
 
+# t <- rf_acc_ant
+# t <-round(t, digits = 2)
+# write.table(t, file = "Anterior verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+
 mean(Atlas.rf_ant$predicted == TrunkAnt_sub$species) #overall accuracy
+
+
 
 # FOSSIL CLASSIFICATION #
 y_pred_ant = predict(Atlas.rf_ant, newdata = TrunkFossilAnt[,1:7])
@@ -639,6 +723,9 @@ print(Atlas.rf_mid)
 rf_acc_mid <- Atlas.rf_mid$confusion
 rf_acc_mid <- 1-rf_acc_mid[,14] # percent correct classification
 rf_acc_mid
+# t <- rf_acc_mid
+# t <-round(t, digits = 2)
+# write.table(t, file = "Middle verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_mid$predicted == TrunkMid_sub$species) #overall accuracy
 
@@ -655,6 +742,9 @@ print(Atlas.rf_post)
 rf_acc_post <- Atlas.rf_post$confusion
 rf_acc_post <- 1-rf_acc_post[,14] # percent correct classification
 rf_acc_post
+# t <- rf_acc_post
+# t <-round(t, digits = 2)
+# write.table(t, file = "Posterior verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_post$predicted == TrunkPost_sub$species) #overall accuracy
 
@@ -671,6 +761,9 @@ print(Atlas.rf_sc)
 rf_acc_sc <- Atlas.rf_sc$confusion
 rf_acc_sc <- 1-rf_acc_sc[,14] # percent correct classification
 rf_acc_sc
+t <- rf_acc_sc
+t <-round(t, digits = 2)
+write.table(t, file = "Sacral verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_sc$predicted == TrunkSc_sub$species) #overall accuracy
 
@@ -705,7 +798,7 @@ Mah_DisAnt <- Mah_Dis(Mahala1ANT)
 trANT <- nj(Mah_DisAnt) #neighbor joining
 
 plot((as.phylo(trANT)),type="unrooted",cex=0.6,
-     use.edge.length=FALSE,lab4ut="axial",
+     use.edge.length=TRUE,lab4ut="axial",
      no.margin=TRUE)
 
 # MIDDLE VERTEBRAE #
@@ -738,7 +831,7 @@ Mahala1SC = pairwise.mahalanobis(SCTotal[,1:7], SCTotal$species, digits = 3)
 Mah_DisSC <- Mah_Dis(Mahala1SC)
 
 trSC <- nj(Mah_DisSC) #neighbor joining
-?nj
+
 plot((as.phylo(trSC)),type="unrooted",cex=0.6,
      use.edge.length=TRUE,lab4ut="axial",
      no.margin=TRUE)# MIDDLE VERTEBRAE #
@@ -761,87 +854,169 @@ library(caret)
 #make KNN model using LOOCV to find optimal k
 
 # SACRAL VERTEBRAE #
+library(caret)
+# LOOCV WITH REPLICATION
+library(foreach)
+library(doParallel)
+ncore <- detectCores()
+registerDoParallel(cores=ncore)
+
 set.seed(123)
-KNNmodel_sc_clade <- train(
-  clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data = TrunkSc_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 1
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkSc_sub)$results
+#   }
+# })
 
-plot(KNNmodel_sc_clade) # plot accuracy vs k
-KNNmodel_sc_clade$bestTune # optimal k
+fishScclade <- map_dfr(fishScclade,`[`, c("k", "Accuracy", "Kappa"))
+kfishScclade <- fishScclade %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishScclade <- kfishScclade[1,]
 
-predicted.classes_sc_clade <- KNNmodel_sc_clade %>% predict(TrunkSc_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_sc_clade)
-mean(predicted.classes_sc_clade == TrunkSc_sub$clades) #overall accuracy
 
-# assess accuracy per clades
-accKNN_sc_clade <- table(TrunkSc_sub$clades,predicted.classes_sc_clade)
+set.seed(123)
+predicted.classes_sc_clade <- train(clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+                                              method     = "knn",
+                                              tuneGrid   = expand.grid(k = 3),
+                                              trControl  = trainControl(method  = "LOOCV"),
+                                              metric     = "Accuracy",
+                                              data       = TrunkSc_sub)$pred # predict class based on KNN model
+mean(predicted.classes_sc_clade$pred == predicted.classes_sc_clade$obs) #overall accuracy
+
+accKNN_sc_clade <- table(predicted.classes_sc_clade$obs,predicted.classes_sc_clade$pred)
 accKNN_sc_clade
-diag(prop.table(accKNN_sc_clade, 1))
+# t <- diag(prop.table(accKNN_sc_clade, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Sacral clade KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
 
 
 # POSTERIOR VERTEBRAE #
 set.seed(123)
-KNNmodel_post_clade <- train(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkPost_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 1
+# system.time({
+#   fishpostCLADE <- foreach(icount(runs)) %dopar% {
+#     train(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkPost_sub)$results
+#   }
+# })
 
-plot(KNNmodel_post_clade) # plot accuracy vs k
-KNNmodel_post_clade$bestTune # optimal k
+fishpostCLADE <- map_dfr(fishpostCLADE,`[`, c("k", "Accuracy", "Kappa"))
+kfishpostCLADE <- fishpostCLADE %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishpostCLADE <- kfishpostCLADE[1,]
 
-predicted.classes_post_clade <- KNNmodel_post_clade %>% predict(TrunkPost_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_post_clade)
-mean(predicted.classes_post_clade == TrunkPost_sub$clades) #overall accuracy
+set.seed(123)
+predicted.classes_post_clade <- train(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                                method     = "knn",
+                                                tuneGrid   = expand.grid(k = 1),
+                                                trControl  = trainControl(method  = "LOOCV"),
+                                                metric     = "Accuracy",
+                                                data       = TrunkPost_sub)$pred # predict class based on KNN model
+mean(predicted.classes_post_clade$pred == predicted.classes_post_clade$obs) #overall accuracy
 
-# assess accuracy per clades
-accKNN_post_clade <- table(TrunkPost_sub$clades,predicted.classes_post_clade)
-accKNN_post_clade
-diag(prop.table(accKNN_post_clade, 1))
+accKNNpostCLADE <- table(predicted.classes_post_clade$obs,predicted.classes_post_clade$pred)
+accKNNpostCLADE
+# t <- diag(prop.table(accKNNpostCLADE, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "posterior trunk clade KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
 
 
 # MIDDLE VERTEBRAE #
 set.seed(123)
-KNNmodel_mid_clade <- train(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkMid_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 1
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkMid_sub)$results
+#   }
+# })
 
-plot(KNNmodel_mid_clade) # plot accuracy vs k
-KNNmodel_mid_clade$bestTune # optimal k
+fishmid <- map_dfr(fishmid,`[`, c("k", "Accuracy", "Kappa"))
+kfishmid <- fishmid %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishmid <- kfishmid[1,]
 
-predicted.classes_mid_clade <- KNNmodel_mid_clade %>% predict(TrunkMid_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_mid_clade)
-mean(predicted.classes_mid_clade == TrunkMid_sub$clades) #overall accuracy
+set.seed(123)
+predicted.classes_mid <- train(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                         method     = "knn",
+                                         tuneGrid   = expand.grid(k = 1),
+                                         trControl  = trainControl(method  = "LOOCV"),
+                                         metric     = "Accuracy",
+                                         data       = TrunkMid_sub)$pred # predict class based on KNN model
+mean(predicted.classes_mid$pred == predicted.classes_mid$obs) #overall accuracy
 
-# assess accuracy per clades
-accKNN_mid_clade <- table(TrunkMid_sub$clades,predicted.classes_mid_clade)
-accKNN_mid_clade
-diag(prop.table(accKNN_mid_clade, 1))
+accKNNmidCLADE <- table(predicted.classes_mid$obs,predicted.classes_mid$pred)
+accKNNmidCLADE
+# t <- diag(prop.table(accKNNmidCLADE, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "middelt trunk clade KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
+
 
 
 # ANTERIOR VERTEBRAE #
 set.seed(123)
-KNNmodel_ant_clade <- train(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkAnt_sub, method = "knn",
-  trControl = trainControl("LOOCV", number =1),
-  preProcess = c("center"), #center the data
-  tuneLength = 15)
+runs <- 1
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkAnt_sub)$results
+#   }
+# })
 
-plot(KNNmodel_ant_clade) # plot accuracy vs k
-KNNmodel_ant_clade$bestTune # optimal k
+fishantCLADE <- map_dfr(fishantCLADE,`[`, c("k", "Accuracy", "Kappa"))
+kfishantCLADE <- fishantCLADE %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishantCLADE <- kfishantCLADE[1,]
 
-predicted.classes_ant_clade <- KNNmodel_ant_clade %>% predict(TrunkAnt_sub[,1:7]) # predict class based on KNN model
-head(predicted.classes_ant_clade)
-mean(predicted.classes_ant_clade == TrunkAnt_sub$clades) #overall accuracy
+set.seed(123)
+predicted.classes_ant_clade <- train(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+                                               method     = "knn",
+                                               tuneGrid   = expand.grid(k = 6),
+                                               trControl  = trainControl(method  = "LOOCV"),
+                                               metric     = "Accuracy",
+                                               data       = TrunkAnt_sub)$pred # predict class based on KNN model
+mean(predicted.classes_ant_clade$pred == predicted.classes_ant_clade$obs) #overall accuracy
 
-# assess accuracy per clades
-accKNN_ant_clade <- table(TrunkAnt_sub$clades,predicted.classes_ant_clade)
+accKNN_ant_clade <- table(predicted.classes_ant_clade$obs,predicted.classes_ant_clade$pred)
 accKNN_ant_clade
-diag(prop.table(accKNN_ant_clade, 1))
+t <- diag(prop.table(accKNN_ant_clade, 1))
+t <-round(t, digits = 2)
+write.table(t, file = "anterior trunk clade KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
 
 
 
@@ -893,8 +1068,11 @@ set.seed(123)
 Atlas.rf_ant_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkAnt_sub, importance=FALSE)
 print(Atlas.rf_ant_clade)
 rf_acc_ant_clade <- Atlas.rf_ant_clade$confusion
-rf_acc_ant_clade <- 1-rf_acc_ant_clade[,14] # percent correct classification
+rf_acc_ant_clade <- 1-rf_acc_ant_clade[,9] # percent correct classification
 rf_acc_ant_clade
+# t <- rf_acc_ant_clade
+# t <-round(t, digits = 2)
+# write.table(t, file = "Anterior verts RFAC clade", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_ant_clade$predicted == TrunkAnt_sub$clades) #overall accuracy
 
@@ -909,8 +1087,11 @@ set.seed(123)
 Atlas.rf_mid_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkMid_sub, importance=FALSE)
 print(Atlas.rf_mid_clade)
 rf_acc_mid_clade <- Atlas.rf_mid_clade$confusion
-rf_acc_mid_clade <- 1-rf_acc_mid_clade[,14] # percent correct classification
+rf_acc_mid_clade <- 1-rf_acc_mid_clade[,9] # percent correct classification
 rf_acc_mid_clade
+# t <- rf_acc_mid_clade
+# t <-round(t, digits = 2)
+# write.table(t, file = "Middle verts RFAC clade", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_mid_clade$predicted == TrunkMid_sub$clades) #overall accuracy
 
@@ -925,8 +1106,11 @@ set.seed(123)
 Atlas.rf_post_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkPost_sub, importance=FALSE)
 print(Atlas.rf_post_clade)
 rf_acc_post_clade <- Atlas.rf_post_clade$confusion
-rf_acc_post_clade <- 1-rf_acc_post_clade[,14] # percent correct classification
+rf_acc_post_clade <- 1-rf_acc_post_clade[,9] # percent correct classification
 rf_acc_post_clade
+# t <- rf_acc_post_clade
+# t <-round(t, digits = 2)
+# write.table(t, file = "Posterior verts RFAC clade", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_post_clade$predicted == TrunkPost_sub$clades) #overall accuracy
 
@@ -941,8 +1125,11 @@ set.seed(123)
 Atlas.rf_sc_clade <- randomForest(clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=TrunkSc_sub, importance=FALSE)
 print(Atlas.rf_sc_clade)
 rf_acc_sc_clade <- Atlas.rf_sc_clade$confusion
-rf_acc_sc_clade <- 1-rf_acc_sc_clade[,14] # percent correct classification
+rf_acc_sc_clade <- 1-rf_acc_sc_clade[,9] # percent correct classification
 rf_acc_sc_clade
+# t <- rf_acc_sc_clade
+# t <-round(t, digits = 2)
+# write.table(t, file = "Sacral verts RFAC clade", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_sc_clade$predicted == TrunkSc_sub$clades) #overall accuracy
 
@@ -955,6 +1142,14 @@ y_pred_sc_clade
 
 
 # MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #
+library(tidyverse)
+library(skimr)
+library(knitr)
+library(party)
+library(GGally)
+ggpairs(TrunkPost_sub[,1:7])
+
+
 
 create_crfplot <- function(rf, conditional = TRUE){
   
@@ -971,38 +1166,56 @@ create_crfplot <- function(rf, conditional = TRUE){
     theme(axis.title.x = element_text(size = 15, color = "black"),
           axis.title.y = element_blank(),
           axis.text.x  = element_text(size = 15, color = "black"),
-          axis.text.y  = element_text(size = 15, color = "black")) 
+          axis.text.y  = element_text(size = 15, color = "black"))  + theme_classic()
   return(p)
-} # function to plot measurement conditional permutation importance
+}
 
 # CONDITIONAL PERUMATATION IMPORTANCE # *long time to run
 
 Atlas.rf_ant_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkAnt_sub,
+  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, 
+  data=TrunkAnt_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
-create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
+Atlas.rf_ant_impplot <- create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
+
 
 Atlas.rf_mid_imp <- cforest(
   clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkMid_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
-create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
+Atlas.rf_mid_impplot <- create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
+
 
 Atlas.rf_post_imp <- cforest(
   clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkPost_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
-create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
+Atlas.rf_post_impplot <- create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
+
 
 Atlas.rf_sc_imp <- cforest(
   clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=TrunkSc_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
-create_crfplot(Atlas.rf_sc_imp, conditional = TRUE)
+Atlas.rf_sc_impplot <- create_crfplot(Atlas.rf_sc_imp, conditional = TRUE)
+
+
+# PLOT ALL TOGETHER #
+par(oma=c(0,0,2,0))
+gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_post_impplot, Atlas.rf_sc_impplot,nrow = 2)
 
 
 
+
+library(MASS)
+library(car)
+PimaCV.lda <- lda(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkPost_sub, CV = FALSE)
+tab <- table(TrunkPost_sub$species, PimaCV.lda$class)
+wine.lda.values <- predict(PimaCV.lda)
+newdata <- data.frame(type = TrunkPost_sub$clades, lda = wine.lda.values$x)
+library(ggplot2)
+ggplot(newdata) + geom_point(aes(lda.LD1, lda.LD2, colour = type), size = 2.5)
 
 
 
