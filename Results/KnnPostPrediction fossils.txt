@@ -1,0 +1,4 @@
+fossil,class
+1,41229-25034,A.tigrinum
+2,41229-25096,A.velasci
+3,41229-25116,A.velasci

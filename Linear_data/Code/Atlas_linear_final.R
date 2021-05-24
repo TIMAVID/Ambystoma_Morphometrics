@@ -181,9 +181,10 @@ accKNN
 
 # FOSSIL CLASSIFICATION #
 
-KnnTestPrediction_k15 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_noTub[,1:6],
-                             Atlas_wofossil_noTub_sub$species, k=15, prob=TRUE)
-KnnTestPrediction_k15
+KnnTestPrediction_k6 <- knn(Atlas_wofossil_noTub_sub[,1:6], Atlas_fossil_noTub[,1:6],
+                             Atlas_wofossil_noTub_sub$species, k=6, prob=TRUE)
+KnnTestPrediction_k6
+# write.table(KnnTestPrediction_k6, file = "Atlas fossil KNN", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -206,6 +207,7 @@ mean(Atlas.rf$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred = predict(Atlas.rf, newdata = Atlas_fossil_noTub[,1:6])
 y_pred
+# write.table(y_pred, file = "Atlas fossil RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -257,9 +259,10 @@ accKNN_clades
 
 # FOSSIL CLADE CLASSIFICATION #
 
-KnnTestPrediction_k11 <- knn(Atlas_wofossil_noTub_sub_clade[,1:6], Atlas_fossil_noTub[,1:6],
-                             Atlas_wofossil_noTub_sub_clade$clades, k=11, prob=TRUE)
-KnnTestPrediction_k11
+KnnTestPrediction_k9 <- knn(Atlas_wofossil_noTub_sub_clade[,1:6], Atlas_fossil_noTub[,1:6],
+                             Atlas_wofossil_noTub_sub_clade$clades, k=9, prob=TRUE)
+KnnTestPrediction_k9
+# write.table(KnnTestPrediction_k9, file = "Atlas fossil clades KNN", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -282,6 +285,7 @@ mean(Atlas.rf_clades$predicted == Atlas_wofossil_noTub_sub_clade$clades) #overal
 # FOSSIL CLADE CLASSIFICATION #
 y_pred_clade = predict(Atlas.rf_clades, newdata = Atlas_fossil_noTub[,1:6])
 y_pred_clade
+# write.table(y_pred_clade, file = "Atlas fossil RFclades", sep = ",", quote = FALSE, row.names = T)
 
 
 

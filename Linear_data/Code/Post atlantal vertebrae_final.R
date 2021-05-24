@@ -22,7 +22,7 @@ PoAtVerts_wofossil$species <- factor(PoAtVerts_wofossil$species, levels =
                                               "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", "A.velasci")) # Reorder species levels
 
 
-
+library(tidyverse)
 
 # SUBSET DATA FOR EACH VERTEBRA #
 T1 <- dplyr::select(PoAtVerts_wofossil, contains("a", ignore.case = FALSE),  contains("species")) %>% drop_na()
@@ -661,6 +661,9 @@ library(class)
 KnnAntPrediction <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
                            TrunkAnt_sub$species, k= 3, prob=TRUE)
 KnnAntPrediction
+# t <- data.frame(fossil = TrunkFossilAnt$species, class = KnnAntPrediction)
+# 
+# write.table(t, file = "KnnAntPrediction fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 # t <- cbind(as.character(TrunkFossilAnt$species), as.character(KnnAntPrediction_k7), as.character(attr(KnnAntPrediction_k7, 'prob')))
 # t <- as.data.frame(t)
@@ -673,18 +676,27 @@ KnnAntPrediction
 KnnMidPrediction <- knn(TrunkMid_sub[,1:7], TrunkFossilT8[,1:7],
                            TrunkMid_sub$species, k=1, prob=TRUE)
 KnnMidPrediction
+# t <- data.frame(fossil = TrunkFossilT8$species, class = KnnMidPrediction)
+# 
+# write.table(t, file = "KnnMidPrediction fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # POSTERIOR FOSSILS #
 KnnPostPrediction <- knn(TrunkPost_sub[,1:7], TrunkFossilT12[,1:7],
                             TrunkPost_sub$species, k=1, prob=TRUE)
 KnnPostPrediction
+# t <- data.frame(fossil = TrunkFossilT12$species, class = KnnPostPrediction)
+# 
+# write.table(t, file = "KnnPostPrediction fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # SACRAL VERTEBRAE FOSSILS #
-KnnPostPrediction <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
+KnnScPrediction <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
                             TrunkSc_sub$species, k=3, prob=TRUE)
-KnnPostPrediction
+KnnScPrediction
+# t <- data.frame(fossil = TrunkFossilSc$species, class = KnnScPrediction)
+# 
+# write.table(t, file = "KnnScPrediction fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -713,6 +725,7 @@ mean(Atlas.rf_ant$predicted == TrunkAnt_sub$species) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_ant = predict(Atlas.rf_ant, newdata = TrunkFossilAnt[,1:7])
 y_pred_ant
+# write.table(y_pred_ant, file = "Anterior fossils RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -732,6 +745,7 @@ mean(Atlas.rf_mid$predicted == TrunkMid_sub$species) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_mid = predict(Atlas.rf_mid, newdata = TrunkFossilT8[,1:7])
 y_pred_mid
+# write.table(y_pred_mid, file = "Middle fossils RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -751,6 +765,7 @@ mean(Atlas.rf_post$predicted == TrunkPost_sub$species) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_post = predict(Atlas.rf_post, newdata = TrunkFossilT12[,1:7])
 y_pred_post
+# write.table(y_pred_post, file = "Posterior fossils RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -763,14 +778,14 @@ rf_acc_sc <- 1-rf_acc_sc[,14] # percent correct classification
 rf_acc_sc
 t <- rf_acc_sc
 t <-round(t, digits = 2)
-write.table(t, file = "Sacral verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "Sacral verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_sc$predicted == TrunkSc_sub$species) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
 y_pred_sc = predict(Atlas.rf_sc, newdata = TrunkFossilSc[,1:7])
 y_pred_sc
-
+# write.table(y_pred_sc, file = "Sacral fossils RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -842,10 +857,10 @@ plot((as.phylo(trSC)),type="unrooted",cex=0.6,
 
 # AMBYSTOMA CLADE CLASSIFICATION #
 
-TrunkAnt_sub$clades <- recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-TrunkMid_sub$clades <- recode(TrunkMid_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-TrunkPost_sub$clades <- recode(TrunkPost_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-TrunkSc_sub$clades <- recode(TrunkSc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+TrunkMid_sub$clades <- dplyr::recode(TrunkMid_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+TrunkPost_sub$clades <- dplyr::recode(TrunkPost_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+TrunkSc_sub$clades <- dplyr::recode(TrunkSc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 
 
 ### K NEAREST NEIGHBOR CLADES ###:Non-parametric
@@ -1011,9 +1026,9 @@ mean(predicted.classes_ant_clade$pred == predicted.classes_ant_clade$obs) #overa
 
 accKNN_ant_clade <- table(predicted.classes_ant_clade$obs,predicted.classes_ant_clade$pred)
 accKNN_ant_clade
-t <- diag(prop.table(accKNN_ant_clade, 1))
-t <-round(t, digits = 2)
-write.table(t, file = "anterior trunk clade KNNAC", sep = ",", quote = FALSE, row.names = T)
+# t <- diag(prop.table(accKNN_ant_clade, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "anterior trunk clade KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1028,8 +1043,11 @@ library(class)
 # ANTERIOR FOSSILS #
 
 KnnAntPrediction <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
-                        TrunkAnt_sub$clades, k=KNNmodel_ant_clade$bestTune , prob=TRUE)
+                        TrunkAnt_sub$clades, k=6 , prob=TRUE)
 KnnAntPrediction
+# t <- data.frame(fossil = TrunkFossilAnt$species, class = KnnAntPrediction)
+# 
+# write.table(t, file = "KnnAntPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 # t <- cbind(as.character(TrunkFossilAnt$clades), as.character(KnnAntPrediction_k7), as.character(attr(KnnAntPrediction_k7, 'prob')))
 # t <- as.data.frame(t)
@@ -1040,20 +1058,29 @@ KnnAntPrediction
 
 # MIDDLE FOSSILS #
 KnnMidPrediction <- knn(TrunkMid_sub[,1:7], TrunkFossilT8[,1:7],
-                        TrunkMid_sub$clades, k=KNNmodel_mid_clade$bestTune, prob=TRUE)
+                        TrunkMid_sub$clades, k=1, prob=TRUE)
 KnnMidPrediction
+# t <- data.frame(fossil = TrunkFossilT8$species, class = KnnMidPrediction)
+# 
+# write.table(t, file = "KnnMidPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # POSTERIOR FOSSILS #
 KnnPostPrediction <- knn(TrunkPost_sub[,1:7], TrunkFossilT12[,1:7],
-                         TrunkPost_sub$clades, k=KNNmodel_post_clade$bestTune, prob=TRUE)
+                         TrunkPost_sub$clades, k=1, prob=TRUE)
 KnnPostPrediction
+# t <- data.frame(fossil = TrunkFossilT12$species, class = KnnPostPrediction)
+# 
+# write.table(t, file = "KnnPostPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # SACRAL VERTEBRAE FOSSILS #
-KnnPostPrediction <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
-                         TrunkSc_sub$clades, k=KNNmodel_sc_clade$bestTune, prob=TRUE)
-KnnPostPrediction
+KnnSCPrediction <- knn(TrunkSc_sub[,1:7], TrunkFossilSc[,1:7],
+                         TrunkSc_sub$clades, k=3, prob=TRUE)
+KnnSCPrediction
+# t <- data.frame(fossil = TrunkFossilSc$species, class = KnnSCPrediction)
+# 
+# write.table(t, file = "KnnSCPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1065,7 +1092,9 @@ library(randomForest)
 
 # ANTERIOR VERTEBRAE #
 set.seed(123)
-Atlas.rf_ant_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkAnt_sub, importance=FALSE)
+Atlas.rf_ant_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a 
+                                   # + X7a
+                                   , data=TrunkAnt_sub, importance=FALSE)
 print(Atlas.rf_ant_clade)
 rf_acc_ant_clade <- Atlas.rf_ant_clade$confusion
 rf_acc_ant_clade <- 1-rf_acc_ant_clade[,9] # percent correct classification
@@ -1079,12 +1108,15 @@ mean(Atlas.rf_ant_clade$predicted == TrunkAnt_sub$clades) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_ant_clade = predict(Atlas.rf_ant_clade, newdata = TrunkFossilAnt[,1:7])
 y_pred_ant_clade
+# write.table(y_pred_ant_clade, file = "ant clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
 # MIDDLE VERTEBRAE #
 set.seed(123)
-Atlas.rf_mid_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkMid_sub, importance=FALSE)
+Atlas.rf_mid_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a 
+                                   # + X7a
+                                   , data=TrunkMid_sub, importance=FALSE)
 print(Atlas.rf_mid_clade)
 rf_acc_mid_clade <- Atlas.rf_mid_clade$confusion
 rf_acc_mid_clade <- 1-rf_acc_mid_clade[,9] # percent correct classification
@@ -1098,12 +1130,15 @@ mean(Atlas.rf_mid_clade$predicted == TrunkMid_sub$clades) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_mid_clade = predict(Atlas.rf_mid_clade, newdata = TrunkFossilT8[,1:7])
 y_pred_mid_clade
+# write.table(y_pred_mid_clade, file = "middle clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
 # POSTERIOR VERTEBRAE #
 set.seed(123)
-Atlas.rf_post_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkPost_sub, importance=FALSE)
+Atlas.rf_post_clade <- randomForest(clades ~ X1a + X2a + X3a + X4a + X5a + X6a 
+                                    # + X7a
+                                    , data=TrunkPost_sub, importance=FALSE)
 print(Atlas.rf_post_clade)
 rf_acc_post_clade <- Atlas.rf_post_clade$confusion
 rf_acc_post_clade <- 1-rf_acc_post_clade[,9] # percent correct classification
@@ -1117,12 +1152,15 @@ mean(Atlas.rf_post_clade$predicted == TrunkPost_sub$clades) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_post_clade = predict(Atlas.rf_post_clade, newdata = TrunkFossilT12[,1:7])
 y_pred_post_clade
+# write.table(y_pred_post_clade, file = "post clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
 # SACRAL VERTEBRAE #
 set.seed(123)
-Atlas.rf_sc_clade <- randomForest(clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=TrunkSc_sub, importance=FALSE)
+Atlas.rf_sc_clade <- randomForest(clades ~ X14 + X15 + X16 + X17 + X18 + X19 
+                                  # + X20
+                                  , data=TrunkSc_sub, importance=FALSE)
 print(Atlas.rf_sc_clade)
 rf_acc_sc_clade <- Atlas.rf_sc_clade$confusion
 rf_acc_sc_clade <- 1-rf_acc_sc_clade[,9] # percent correct classification
@@ -1136,6 +1174,7 @@ mean(Atlas.rf_sc_clade$predicted == TrunkSc_sub$clades) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred_sc_clade = predict(Atlas.rf_sc_clade, newdata = TrunkFossilSc[,1:7])
 y_pred_sc_clade
+# write.table(y_pred_sc_clade, file = "sc clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1208,14 +1247,7 @@ gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_pos
 
 
 
-library(MASS)
-library(car)
-PimaCV.lda <- lda(clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data = TrunkPost_sub, CV = FALSE)
-tab <- table(TrunkPost_sub$species, PimaCV.lda$class)
-wine.lda.values <- predict(PimaCV.lda)
-newdata <- data.frame(type = TrunkPost_sub$clades, lda = wine.lda.values$x)
-library(ggplot2)
-ggplot(newdata) + geom_point(aes(lda.LD1, lda.LD2, colour = type), size = 2.5)
+
 
 
 

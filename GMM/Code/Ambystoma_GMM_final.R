@@ -377,6 +377,7 @@ accKNN
 KnnTestPrediction_k5 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores$species, k=5, prob=TRUE)
 KnnTestPrediction_k5
+# write.table(KnnTestPrediction_k5, file = "GMM fossil KNN", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -398,6 +399,7 @@ mean(Atlas.rf$predicted == Atlas_PC_scores$species) #overall accuracy
 # FOSSIL CLASSIFICATION #
 y_pred = predict(Atlas.rf, newdata = Fossil_PC_scores2[,1:16])
 y_pred
+# write.table(y_pred, file = "GMM fossil RF", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -450,9 +452,10 @@ accKNN_clades
 
 # FOSSIL CLASSIFICATION #
 
-KnnTestPrediction_k9 <- knn(Atlas_PC_scores_clade[,1:16], Fossil_PC_scores2,
-                            Atlas_PC_scores_clade$clades, k=9, prob=TRUE)
-KnnTestPrediction_k9
+KnnTestPrediction_k8 <- knn(Atlas_PC_scores_clade[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores_clade$clades, k=8, prob=TRUE)
+KnnTestPrediction_k8
+# write.table(KnnTestPrediction_k8, file = "GMM fossil KNNclade", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -475,6 +478,7 @@ mean(Atlas.rf_clades$predicted == Atlas_PC_scores_clade$clades) #overall accurac
 # FOSSIL CLASSIFICATION #
 y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16])
 y_pred_clade
+# write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
 
 
 
