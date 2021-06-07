@@ -446,11 +446,11 @@ library(tidyr)
 data_long <- gather(T8_extension, Type , Measurement, Cen_to_NeuAr:Cen_to_PoZy, factor_key=TRUE) #convert to long format
 
 library(ggplot2)
-s <- ggplot(data_long, aes(species, Measurement, fill = Type)) + 
+s <- ggplot(data_long, aes(Type, Measurement, fill = Type)) + 
   geom_boxplot(position = "dodge") + theme_classic() + ylab("Value") +
   theme(legend.position="bottom") + scale_fill_discrete(name = "Measurement Type", labels= c("NSPE", "NSPE/PoZyPE", "PoZyPE"))
+s <- s + facet_wrap(~species, ncol = 5) + stat_n_text()
 s
-
 
 # Assess sample size per species
 library(tidyverse)
