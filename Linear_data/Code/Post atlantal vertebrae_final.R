@@ -1249,5 +1249,92 @@ gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_pos
 
 
 
+### SEXUAL DIMORPHISM? ###
+
+PoAtVerts_sex <-  Amb_linear_data[c(6:7, 14:48, 53:55)] #select only relevant Post atlantal measurements
+
+# REMOVE FOSSILS #
+PoAtVerts_sex <- dplyr::filter(PoAtVerts_sex, !grepl('41229*', species)) # remove fossils
+row.names(PoAtVerts_sex) <- PoAtVerts_sex$specimen_num
+# PoAtVerts_wofossil <- subset(PoAtVerts_wofossil, select=-c(specimen_num))
+PoAtVerts_sex <- droplevels(PoAtVerts_sex)
+PoAtVerts_sex$species <- factor(PoAtVerts_sex$species, levels = 
+                                  c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
+                                    "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", "A.velasci")) # Reorder species levels
+library(tidyverse)
+# SUBSET DATA FOR EACH VERTEBRA #
+T1_sex <- dplyr::select(PoAtVerts_sex, contains("a", ignore.case = FALSE),  contains("species"), contains("sex")) %>% drop_na()
+
+T4_sex <- dplyr::select(PoAtVerts_sex, contains("b", ignore.case = FALSE), contains("species"), contains("sex")) %>% drop_na()
+
+T8_sex <- dplyr::select(PoAtVerts_sex, contains("c", ignore.case = FALSE), contains("species"), contains("sex")) %>% drop_na()
+T8_sex <- subset(T8_sex, select=-c(specimen_num))
+
+T8_extension_sex <- dplyr::select(PoAtVerts_sex, contains("Cen"), contains("species"), contains("sex")) %>% drop_na()
+
+T12_sex<- dplyr::select(PoAtVerts_sex, contains("d", ignore.case = FALSE), contains("species"), contains("sex")) %>% drop_na()
+
+Sc_sex <- dplyr::select(PoAtVerts_sex, num_range("X", 14:20), contains("species"), contains("sex")) %>% drop_na()
+Sc.pca_sex <- prcomp(Sc_sex[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+
+
+
+
+# MAKE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #
+
+#"Anterior"(1,4) comparative verts
+
+T1_comb_sex <- T1_sex %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "a")
+T1_comb_sex <- T1_comb_sex %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+
+T4_comb_sex <- T4_sex %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+T4_comb_sex <- T4_comb_sex %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "b")
+
+TrunkAnt_sex <- rbind(T1_comb_sex, T4_comb_sex)
+TrunkAnt.pca_sex <- prcomp(TrunkAnt_sex[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+#"Mid"(4,8,12) comparative verts
+T8_comb_sex <- T8_sex %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+T8_comb_sex <- T8_comb_sex %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "c")
+
+T12_comb_sex <- T12_sex %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+T12_comb_sex <- T12_comb_sex %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "d")
+
+TrunkMid_sex <- rbind(T4_comb_sex, T8_comb_sex, T12_comb_sex)
+TrunkMid.pca_sex <- prcomp(TrunkMid_sex[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+#"posterior" (12) comparative verts
+
+TrunkPost_sex <- rbind(T8_comb_sex, T12_comb_sex)
+TrunkPost.pca_sex <- prcomp(TrunkPost_sex[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+
+
+
+
+library(ggplot2)
+library(ggforce)
+
+Antscores_sex <-data.frame(TrunkAnt.pca_sex$x, species = TrunkAnt_sex$species, sex = TrunkAnt_sex$Sex)
+
+percentage_ant_sex <- round(TrunkAnt.pca_sex$sdev / sum(TrunkAnt.pca_sex$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage_ant_sex <- paste( colnames(Antscores_sex), "(", paste( as.character(percentage_ant_sex), "%", ")", sep="") )
+
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
+
+
+Ant_plot_sex<-ggplot(Antscores_sex,aes(x=PC1,y=PC2,color=species, shape = sex)) + 
+  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
+  geom_point(size =2)+ xlab(percentage_ant_sex[1]) + ylab(percentage_ant_sex[2]) +
+  scale_color_manual(name = "Species", breaks=levels(TrunkAnt_sex$species), values=c(speciescolors)) + 
+  theme_classic() + ggtitle("Anterior Vertebrae")
+Ant_plot_sex
+
+
 
 
