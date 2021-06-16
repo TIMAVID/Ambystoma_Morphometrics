@@ -1,8 +1,0 @@
-fossil,class
-1,41229-25128,A.mavortium
-2,41229-25129,A.tigrinum
-3,41229-25165,A.velasci
-4,41229-25218,A.mavortium
-5,41229-25235,A.velasci
-6,41229-25282,A.velasci
-7,41229-25291,A.velasci
