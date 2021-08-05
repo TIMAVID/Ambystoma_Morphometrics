@@ -484,14 +484,14 @@ rf_acc_clades <- 1-rf_acc_clades[,9] # percent correct classification
 rf_acc_clades
 t <- rf_acc_clades
 t <-round(t, digits = 2)
-write.table(t, file = "Atlas GMM RFAC clades", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "Atlas GMM RFAC clades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_clades$predicted == Atlas_PC_scores_clade$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
 y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16])
 y_pred_clade
-write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
+# write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
 
 
 
