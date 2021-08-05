@@ -8,6 +8,12 @@ raw_data <- readland.tps(f, specID = c("imageID")) # the function "readland.tps"
 plot(raw_data)
 head(raw_data)
 
+# GENERALIZED PROCUSTES ANALYSIS #
+
+raw_data <- gpagen(raw_data) # performs Generalized Procrustes analysis of landmarks and creates aligned Procrustes coordinates
+plot(raw_data)
+
+
 # Read in csv file of specimens
 f2 <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/GMM/Data/Ambystoma_atlas_a_GMM_5_4_21.CSV")
 specimenList <- read.csv(f2, header = FALSE, sep = ",", stringsAsFactors = TRUE) # this is a matrix of each specimen  
@@ -22,7 +28,7 @@ s <-cbind(specimenList, species)
 ## SUBSET DATA FOR FOSSILS ONLY ##
 
 library(tidyverse)
-new <- list(land = raw_data , species=s$species, specimen = s$V2)
+new <- list(land = raw_data$coords , species=s$species, specimen = s$V2, size = raw_data$Csize)
 
 # I first subset the original landmark data. 
 # Data Processing
@@ -33,7 +39,7 @@ GPA_sub <- new
 splitLand <- list(GPA_sub)
 for (i in 1:155){
   
-  splitLand[[i]] <-raw_data[1:8,1:2,i]
+  splitLand[[i]] <-raw_data$coords[1:8,1:2,i]
   
 }
 GPA_sub[["land"]] <- splitLand
@@ -65,6 +71,8 @@ species <- vector()
 
 specimen <- vector()
 
+size <- vector()
+
 # Extract from rawData just the specimens for which you want data
 
 j <- 0
@@ -78,11 +86,13 @@ for (i in Fossilspecimens$ID){
   
   specimen <- c(specimen,as.character(GPA_sub[["specimen"]][[i]]))
   
+  size <- c(size,as.numeric(GPA_sub[["size"]][[i]]))
+  
 }
 
 # Assemble the extracted data into a format like that of your original dataset
 
-GMM_data_fossil <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen)) #raw data of fossil specimens
+GMM_data_fossil <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen), size = size) #raw data of fossil specimens
 
 
 # the lines below recast the list in "land" to the original array format and attributes
@@ -126,6 +136,8 @@ species <- vector()
 
 specimen <- vector()
 
+size <- vector()
+
 # Extract from rawData just the specimens for which you want data
 
 j <- 0
@@ -139,11 +151,13 @@ for (i in specimens$ID){
   
   specimen <- c(specimen,as.character(GPA_sub[["specimen"]][[i]]))
   
+  size <- c(size,as.numeric(GPA_sub[["size"]][[i]]))
+  
 }
 
 # Assemble the extracted data into a format like that of your original dataset
 
-GMM_data_noFossil <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen)) #raw data of the smallest three juveniles of each species and the largest three adults of each species
+GMM_data_noFossil <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen), size = size) #raw data of the smallest three juveniles of each species and the largest three adults of each species
 
 
 # the lines below recast the list in "land" to the original array format and attributes
@@ -187,6 +201,8 @@ species <- vector()
 
 specimen <- vector()
 
+size <- vector()
+
 # Extract from rawData just the specimens for which you want data
 
 j <- 0
@@ -200,11 +216,13 @@ for (i in specimens$ID){
   
   specimen <- c(specimen,as.character(GPA_sub[["specimen"]][[i]]))
   
+  size <- c(size,as.numeric(GPA_sub[["size"]][[i]]))
+  
 }
 
 # Assemble the extracted data into a format like that of your original dataset
 
-GMM_data_sub <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen)) #raw data of the smallest three juveniles of each species and the largest three adults of each species
+GMM_data_sub <- list("land"=unlist(land),"species"=as.factor(species),"specimen"=as.factor(specimen), size = size) #raw data of the smallest three juveniles of each species and the largest three adults of each species
 
 
 # the lines below recast the list in "land" to the original array format and attributes
@@ -217,25 +235,19 @@ attributes(GMM_data_sub$land)$dimnames[[3]] <- specimens$specimenName
 
 
 
-# GENERALIZED PROCUSTES ANALYSIS #
-
-GPA_noFossil_landmarks <- gpagen(GMM_data_noFossil$land) # performs Generalized Procrustes analysis of landmarks and creates aligned Procrustes coordinates
-GPA_sub_landmarks <- gpagen(GMM_data_sub$land)
-GPA_Fossil_landmarks <- gpagen(GMM_data_fossil$land)
-
 # CREATE GMM DATAFRAMES 1) WITHOUT FOSSILS 2) WITHOUT FOSSILS & W/O A. SUBSALSUM AND A.ORDINARIUM 3) FOSSIL ONLY #
-GMM_data_noFossil <-geomorph.data.frame(coords=GPA_noFossil_landmarks$coords,
-                               size=GPA_noFossil_landmarks$Csize, species=GMM_data_noFossil$species)
+GMM_data_noFossil <-geomorph.data.frame(coords=GMM_data_noFossil$land,
+                               size=GMM_data_noFossil$size, species=GMM_data_noFossil$species)
 GMM_data_noFossil$species <- factor(GMM_data_noFossil$species, levels = 
                                       c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
                                         "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", "A.velasci")) # Reorder levels of species
-GMM_data_sub <-geomorph.data.frame(coords=GPA_sub_landmarks$coords,
-                                        size=GPA_sub_landmarks$Csize, species=GMM_data_sub$species)
+GMM_data_sub <-geomorph.data.frame(coords=GMM_data_sub$land,
+                                        size=GMM_data_sub$size, species=GMM_data_sub$species)
 GMM_data_sub$species <- factor(GMM_data_sub$species, levels = 
                                       c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
                                         "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.velasci")) # Reorder levels of species
-GMM_data_fossil <-geomorph.data.frame(coords=GPA_Fossil_landmarks$coords,
-                                        size=GPA_Fossil_landmarks$Csize, species=GMM_data_fossil$species)
+GMM_data_fossil <-geomorph.data.frame(coords=GMM_data_fossil$land,
+                                        size=GMM_data_fossil$size, species=GMM_data_fossil$species)
 
 
 
@@ -255,7 +267,7 @@ Fossil_PC_scores <- cbind(Fossil_PC_scores, species= GMM_data_fossil$species)
 
 PC_scores <- as.data.frame(Amb_PCA$x)
 PC_scores <- cbind(PC_scores, species= GMM_data_noFossil$species)
-percentage <- round(Amb_PCA$sdev / sum(Amb_PCA$sdev) * 100, 2) # find percentage variance explained by PC's
+percentage <- round(Amb_PCA$sdev^2 / sum(Amb_PCA$sdev^2) * 100, 2) # find percentage variance explained by PC's
 percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), "%", ")", sep="") )
 
 All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores the fossils
@@ -337,7 +349,7 @@ ncore <- detectCores()
 registerDoParallel(cores=ncore)
 set.seed(123)
 
-runs <- 3
+runs <- 100
 
 # system.time({
 #   fish <- foreach(icount(runs)) %dopar% {
@@ -358,7 +370,7 @@ fish <- map_dfr(fish,`[`, c("k", "Accuracy", "Kappa"))
 set.seed(123)
 predicted.classes <- train(species~ .,
                                      method     = "knn",
-                                     tuneGrid   = expand.grid(k = 5),
+                                     tuneGrid   = expand.grid(k = 3),
                                      trControl  = trainControl(method  = "LOOCV"),
                                      metric     = "Accuracy",
                                      data       = Atlas_PC_scores)$pred # predict class based on KNN model
@@ -367,17 +379,17 @@ mean(predicted.classes$pred == predicted.classes$obs) #overall accuracy
 
 accKNN <- table(predicted.classes$obs,predicted.classes$pred)
 accKNN
-# t <- diag(prop.table(accKNN, 1))
-# t <- round(t, 2)
-# write.table(t, file = "GMM KNNspeciesAcc.txt", sep = ",", quote = FALSE, row.names = T)
+t <- diag(prop.table(accKNN, 1))
+t <- round(t, 2)
+write.table(t, file = "GMM KNNspeciesAcc.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # FOSSIL CLASSIFICATION #
-
-KnnTestPrediction_k5 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
-                            Atlas_PC_scores$species, k=5, prob=TRUE)
-KnnTestPrediction_k5
-# write.table(KnnTestPrediction_k5, file = "GMM fossil KNN", sep = ",", quote = FALSE, row.names = T)
+library(class)
+KnnTestPrediction_k3 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
+                            Atlas_PC_scores$species, k=3, prob=TRUE)
+KnnTestPrediction_k3
+write.table(KnnTestPrediction_k3, file = "GMM fossil KNN", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -397,6 +409,7 @@ rf_acc
 mean(Atlas.rf$predicted == Atlas_PC_scores$species) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
+set.seed(123)
 y_pred = predict(Atlas.rf, newdata = Fossil_PC_scores2[,1:16])
 y_pred
 # write.table(y_pred, file = "GMM fossil RF", sep = ",", quote = FALSE, row.names = T)
@@ -419,16 +432,16 @@ Atlas_PC_scores_clade %>%
 
 #KNN#
 set.seed(123)
-# system.time({
-#   fishclade <- foreach(icount(runs)) %dopar% {
-#     caret::train(clades~ .,
-#                  method     = "knn",
-#                  tuneGrid   = expand.grid(k = 1:35),
-#                  trControl  = caret::trainControl(method  = "LOOCV"),
-#                  metric     = "Accuracy",
-#                  data       = Atlas_PC_scores_clade)$results
-#   }
-# })
+system.time({
+  fishclade <- foreach(icount(runs)) %dopar% {
+    caret::train(clades~ .,
+                 method     = "knn",
+                 tuneGrid   = expand.grid(k = 1:35),
+                 trControl  = caret::trainControl(method  = "LOOCV"),
+                 metric     = "Accuracy",
+                 data       = Atlas_PC_scores_clade)$results
+  }
+})
 
 fishclade <- map_dfr(fishclade,`[`, c("k", "Accuracy", "Kappa"))
 
@@ -436,7 +449,7 @@ fishclade <- map_dfr(fishclade,`[`, c("k", "Accuracy", "Kappa"))
 set.seed(123)
 predicted.clades <- train(clades~ .,
                                            method     = "knn",
-                                           tuneGrid   = expand.grid(k = 8),
+                                           tuneGrid   = expand.grid(k = 7),
                                            trControl  = caret::trainControl(method  = "LOOCV"),
                                            metric     = "Accuracy",
                                            data       = Atlas_PC_scores_clade)$pred # predict class based on KNN model
@@ -469,50 +482,50 @@ print(Atlas.rf_clades)
 rf_acc_clades <- Atlas.rf_clades$confusion
 rf_acc_clades <- 1-rf_acc_clades[,9] # percent correct classification
 rf_acc_clades
-# t <- rf_acc_clades
-# t <-round(t, digits = 2)
-# write.table(t, file = "Atlas GMM RFAC clades", sep = ",", quote = FALSE, row.names = T)
+t <- rf_acc_clades
+t <-round(t, digits = 2)
+write.table(t, file = "Atlas GMM RFAC clades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_clades$predicted == Atlas_PC_scores_clade$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
 y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16])
 y_pred_clade
-# write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
 
 
 
 
 
-### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
-
-library(HDMD)
-Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$species, digits = 3)
-names = rownames(Mahala1$means) #capture labels
-
-mahala = sqrt(Mahala1$distance) #mahalanobis distance
-rownames(mahala) = names #set rownames in the dissimilarity matrix
-colnames(mahala) = names #set colnames in the dissimilarity matrix
-
-mahala <- as.dist(mahala) #this is the mahalanobis dissimilarity matrix 
-
-# dendroS <- hclust(mahala)
-
-library("ape")
-library(phytools)
-
-# # plot(as.phylo(dendroS), type = "cladogram", cex = 0.6,
-#      no.margin = TRUE)
-
-tr <- nj(mahala) #neighbor joining
-
-plot(unroot(as.phylo(tr)),type="unrooted",cex=0.6,
-     use.edge.length=FALSE,lab4ut="axial",
-     no.margin=TRUE)
-
-plot((as.phylo(tr)),type="unrooted",cex=0.6,
-     use.edge.length=TRUE,lab4ut="axial",
-     no.margin=TRUE)
+# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
+# 
+# library(HDMD)
+# Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$species, digits = 3)
+# names = rownames(Mahala1$means) #capture labels
+# 
+# mahala = sqrt(Mahala1$distance) #mahalanobis distance
+# rownames(mahala) = names #set rownames in the dissimilarity matrix
+# colnames(mahala) = names #set colnames in the dissimilarity matrix
+# 
+# mahala <- as.dist(mahala) #this is the mahalanobis dissimilarity matrix 
+# 
+# # dendroS <- hclust(mahala)
+# 
+# library("ape")
+# library(phytools)
+# 
+# # # plot(as.phylo(dendroS), type = "cladogram", cex = 0.6,
+# #      no.margin = TRUE)
+# 
+# tr <- nj(mahala) #neighbor joining
+# 
+# plot(unroot(as.phylo(tr)),type="unrooted",cex=0.6,
+#      use.edge.length=FALSE,lab4ut="axial",
+#      no.margin=TRUE)
+# 
+# plot((as.phylo(tr)),type="unrooted",cex=0.6,
+#      use.edge.length=TRUE,lab4ut="axial",
+#      no.margin=TRUE)
 
 
 
