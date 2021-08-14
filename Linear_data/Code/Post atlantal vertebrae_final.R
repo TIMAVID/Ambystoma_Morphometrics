@@ -24,7 +24,7 @@ PoAtVerts_wofossil$species <- factor(PoAtVerts_wofossil$species, levels =
 
 library(tidyverse)
 
-# SUBSET DATA FOR EACH VERTEBRA #
+# SUBSET DATA FOR EACH VERTEBRA #______________________________________________________
 T1 <- dplyr::select(PoAtVerts_wofossil, contains("a", ignore.case = FALSE),  contains("species")) %>% drop_na()
 
 
@@ -40,7 +40,7 @@ T12<- dplyr::select(PoAtVerts_wofossil, contains("d", ignore.case = FALSE), cont
 Sc <- dplyr::select(PoAtVerts_wofossil, num_range("X", 14:20), contains("species")) %>% drop_na()
 
 
-# PCA PLOT OF MODERN SPECIMENS #
+# PCA PLOT OF MODERN SPECIMENS #______________________________________________________
 
 library(ggplot2)
 library(ggforce)
@@ -144,7 +144,201 @@ gridExtra::grid.arrange(T1_4_plot, T8_plot ,T12_plot,SC_plot,nrow = 2)
 
 
 
-### CALCULATE ZYGAPOPHYSEAL RATIOS ###
+# *removed A. subsalsum and A. ordinarium* #______________________________________________________
+
+#Anterior vertebrae
+
+TrunkAnt_sub <- dplyr::filter(TrunkAnt, !grepl('A.subsalsum|A.ordinarium', species))
+TrunkAnt_sub$species <- droplevels(TrunkAnt_sub$species)
+
+#Mid vertebrae
+Trunk8_sub <- dplyr::filter(T8, !grepl('A.subsalsum|A.ordinarium', species))
+Trunk8_sub$species <- droplevels(Trunk8_sub$species)
+
+
+#Posterior vertebrae
+Trunk12_sub <- dplyr::filter(T12, !grepl('A.subsalsum|A.ordinarium', species))
+Trunk12_sub$species <- droplevels(Trunk12_sub$species)
+
+
+# Sacral vertebrae
+Sc_sub <- dplyr::filter(Sc, !grepl('A.subsalsum|A.ordinarium', species))
+Sc_sub$species <- droplevels(Sc_sub$species)
+
+
+
+
+
+
+
+### K NEAREST NEIGHBOR   ###:Non-parametric______________________________________________________
+library(caret)
+
+#make KNN model using LOOCV to find optimal k
+
+# SACRAL VERTEBRAE #
+
+
+# LOOCV WITH REPLICATION
+library(foreach)
+library(doParallel)
+ncore <- detectCores()
+registerDoParallel(cores=ncore)
+
+set.seed(123)
+runs <- 1
+# system.time({
+#   fishSc <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = TrunkSc_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
+
+fishSc <- map_dfr(fishSc,`[`, c("k", "Accuracy", "Kappa"))
+kfishSc <- fishSc %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishSc <- kfishSc[1,] # k with highest accuracy
+
+
+set.seed(123)
+predicted.classes_sc <- train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+                              method     = "knn",
+                              tuneGrid   = expand.grid(k = 3),
+                              trControl  = trainControl(method  = "LOOCV"),
+                              metric     = "Accuracy",
+                              data       = TrunkSc_sub)$pred # predict class based on KNN model
+mean(predicted.classes_sc$pred == predicted.classes_sc$obs) #overall accuracy
+
+accKNNsc <- table(predicted.classes_sc$obs,predicted.classes_sc$pred)
+accKNNsc
+# t <- diag(prop.table(accKNNsc, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "Sacral species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
+
+
+
+
+### RANDOM FOREST CLASSIFICATION ###:Non-parametric______________________________________________________
+library(randomForest)
+
+# ANTERIOR VERTEBRAE #
+set.seed(123)
+Atlas.rf_ant <- randomForest(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkAnt_sub, importance=FALSE)
+print(Atlas.rf_ant)
+rf_acc_ant <- Atlas.rf_ant$confusion
+rf_acc_ant <- 1-rf_acc_ant[,14] # percent correct classification
+rf_acc_ant
+
+# t <- rf_acc_ant
+# t <-round(t, digits = 2)
+# write.table(t, file = "Anterior verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+
+mean(Atlas.rf_ant$predicted == TrunkAnt_sub$species) #overall accuracy
+
+
+
+
+
+
+# AMBYSTOMA CLADE CLASSIFICATION #______________________________________________________
+
+TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+Trunk8_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+Trunk12_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+Sc_sub$clades <- dplyr::recode(Sc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+
+
+
+
+
+
+
+
+
+# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #______________________________________________________
+library(tidyverse)
+library(skimr)
+library(knitr)
+library(party)
+library(GGally)
+ggpairs(TrunkPost_sub[,1:7])
+
+
+
+create_crfplot <- function(rf, conditional = TRUE){
+  
+  imp <- rf %>%
+    varimp(conditional = conditional) %>% 
+    as_tibble() %>% 
+    rownames_to_column("Feature") %>% 
+    rename(Importance = value)
+  
+  p <- ggplot(imp, aes(x = reorder(Feature, Importance), y = Importance)) +
+    geom_bar(stat = "identity", fill = "#53cfff", width = 0.65) +
+    coord_flip() + 
+    theme_light(base_size = 20) +
+    theme(axis.title.x = element_text(size = 15, color = "black"),
+          axis.title.y = element_blank(),
+          axis.text.x  = element_text(size = 15, color = "black"),
+          axis.text.y  = element_text(size = 15, color = "black"))  + theme_classic()
+  return(p)
+}
+
+# CONDITIONAL PERUMATATION IMPORTANCE # *long time to run
+
+Atlas.rf_ant_imp <- cforest(
+  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, 
+  data=TrunkAnt_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_ant_impplot <- create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
+
+
+Atlas.rf_mid_imp <- cforest(
+  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=Trunk8_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_mid_impplot <- create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
+
+
+Atlas.rf_post_imp <- cforest(
+  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=Trunk12_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_post_impplot <- create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
+
+
+Atlas.rf_sc_imp <- cforest(
+  clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=Sc_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_sc_impplot <- create_crfplot(Atlas.rf_sc_imp, conditional = TRUE)
+
+
+# PLOT ALL TOGETHER #
+par(oma=c(0,0,2,0))
+gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_post_impplot, Atlas.rf_sc_impplot,nrow = 2)
+
+
+
+
+
+
+
+
+
+
+
+### CALCULATE ZYGAPOPHYSEAL RATIOS ###______________________________________________________
 library(tibble)
 zygapophyses <- dplyr::select(PoAtVerts_wofossil, contains("X10"), contains("X11"), contains("X12"),contains("X17"), contains("X18"), contains("X19"), contains("species"), contains("specimen"))
 
@@ -213,7 +407,7 @@ ZyPlot + scale_x_discrete(breaks=c("Zyratioa","Zyratiob","Zyratioc", "Zyratiod",
 
 
 
-### CALCULATE CENTRUM RATIOS ###
+### CALCULATE CENTRUM RATIOS ###______________________________________________________
 
 centrum <- dplyr::select(PoAtVerts_wofossil, contains("X7"), contains("X8"), contains("X9"),contains("X14"), contains("X15"), contains("X16"), contains("species"), contains("specimen"))
 
@@ -280,7 +474,7 @@ CenPlot + scale_x_discrete(breaks=c("Cenratioa","Cenratiob","Cenratioc", "Cenrat
 
 
 
-# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #
+# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #______________________________________________________
 
 library(EnvStats)
 T8_extension
@@ -298,7 +492,7 @@ s <- s + facet_wrap(~species, ncol = 5) + stat_n_text()
 s
 
 
-# ## Phylogenetic signal ##
+# ## Phylogenetic signal ##______________________________________________________
 # 
 # # Load in data #
 # require(phytools)
@@ -358,7 +552,7 @@ s
 
 
 
-# MAKE CONSERVATIVE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #
+# MAKE CONSERVATIVE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #______________________________________________________
 
 #"Anterior"(1,4) comparative verts
 
@@ -394,7 +588,7 @@ TrunkPost.pca <- prcomp(TrunkPost[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
 
 
-# MAKE FOSSIL VERTEBRAE GROUPINGS BASED ON ESTIMATED POSITION IN VERTEBRAL COLUMN #
+# MAKE FOSSIL VERTEBRAE GROUPINGS BASED ON ESTIMATED POSITION IN VERTEBRAL COLUMN #______________________________________________________
 
 Fossilverts <- dplyr::filter(PoAtVerts, grepl('41229*', species)) # fossils only
 row.names(Fossilverts) <- Fossilverts$species
@@ -434,7 +628,7 @@ TrunkFossilSc <- na.omit(TrunkFossilSc) # remove rows with N/A's
 
 
 
-## PRINCIPAL COMPONENT ANALYSES WITH FOSSILS ##
+## PRINCIPAL COMPONENT ANALYSES WITH FOSSILS ##______________________________________________________
 
 # Anterior trunk fossils
 
@@ -552,7 +746,7 @@ gridExtra::grid.arrange(Ant_plot, Mid_plot ,Post_plot,Sc_plot,nrow = 2)
 
 
 
-# Assess sample size per species
+# Assess sample size per species______________________________________________________
 library(tidyverse)
 
 PoAtVerts_wofossil %>%
@@ -584,7 +778,7 @@ TrunkSc_sub$species <- droplevels(TrunkSc_sub$species)
 
 
 
-### K NEAREST NEIGHBOR   ###:Non-parametric
+### CONSERVATIVE K NEAREST NEIGHBOR   ###:Non-parametric______________________________________________________
 library(caret)
 
 #make KNN model using LOOCV to find optimal k
@@ -753,7 +947,7 @@ accKNNant
 
 
 
-## KNN FOSSIL CLASSIFICATIONS ##
+## KNN FOSSIL CLASSIFICATIONS ##______________________________________________________
 library(class)
 
 # ANTERIOR FOSSILS #
@@ -803,7 +997,7 @@ KnnScPrediction
 
 
 
-### RANDOM FOREST CLASSIFICATION ###:Non-parametric
+### CONSERVATIVE RANDOM FOREST CLASSIFICATION ###:Non-parametric______________________________________________________
 library(randomForest)
 
 # ANTERIOR VERTEBRAE #
@@ -891,71 +1085,71 @@ y_pred_sc
 
 
 
-### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
-library(HDMD)
-library("ape")
-library(phytools)
-
-Mah_Dis <- function(pairwiseMah) {
-  names = rownames(pairwiseMah$means) #capture labels
-  mahala = sqrt(pairwiseMah$distance) #mahalanobis distance
-  rownames(mahala) = names #set rownames in the dissimilarity matrix
-  colnames(mahala) = names #set colnames in the dissimilarity matrix
-  return(mahala <- as.dist(mahala)) #this is the mahalanobis dissimilarity matrix 
-} # return mahalanobis dissimilarity matrix
-
-
-# ANTERIOR VERTEBRAE #
-ANTTotal <- rbind(TrunkAnt[,1:8], TrunkFossilAnt)
-Mahala1ANT = pairwise.mahalanobis(ANTTotal[,1:7], ANTTotal$species, digits = 3)
-Mah_DisAnt <- Mah_Dis(Mahala1ANT)
-
-trANT <- nj(Mah_DisAnt) #neighbor joining
-
-plot((as.phylo(trANT)),type="unrooted",cex=0.6,
-     use.edge.length=TRUE,lab4ut="axial",
-     no.margin=TRUE)
-
-# MIDDLE VERTEBRAE #
-MIDTotal <- rbind(TrunkMid[,1:8], TrunkFossilT8)
-Mahala1MID = pairwise.mahalanobis(MIDTotal[,1:7], MIDTotal$species, digits = 3)
-Mah_DisMID <- Mah_Dis(Mahala1MID)
-
-trMID <- nj(Mah_DisMID) #neighbor joining
-
-plot((as.phylo(trMID)),type="unrooted",cex=0.6,
-     use.edge.length=TRUE,lab4ut="axial",
-     no.margin=TRUE)
-
-
-# POSTERIOR VERTEBRAE #
-POSTTotal <- rbind(TrunkPost[,1:8], TrunkFossilT12)
-Mahala1POST = pairwise.mahalanobis(POSTTotal[,1:7], POSTTotal$species, digits = 3)
-Mah_DisPOST <- Mah_Dis(Mahala1POST)
-
-trPOST <- nj(Mah_DisPOST) #neighbor joining
-
-plot((as.phylo(trPOST)),type="unrooted",cex=0.6,
-     use.edge.length=TRUE,lab4ut="axial",
-     no.margin=TRUE)# MIDDLE VERTEBRAE #
-
-
-# SACRAL VERTEBRAE #
-SCTotal <- rbind(Sc[,1:8], TrunkFossilSc)
-Mahala1SC = pairwise.mahalanobis(SCTotal[,1:7], SCTotal$species, digits = 3)
-Mah_DisSC <- Mah_Dis(Mahala1SC)
-
-trSC <- nj(Mah_DisSC) #neighbor joining
-
-plot((as.phylo(trSC)),type="unrooted",cex=0.6,
-     use.edge.length=TRUE,lab4ut="axial",
-     no.margin=TRUE)# MIDDLE VERTEBRAE #
-
-
+# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###______________________________________________________
+# library(HDMD)
+# library("ape")
+# library(phytools)
+# 
+# Mah_Dis <- function(pairwiseMah) {
+#   names = rownames(pairwiseMah$means) #capture labels
+#   mahala = sqrt(pairwiseMah$distance) #mahalanobis distance
+#   rownames(mahala) = names #set rownames in the dissimilarity matrix
+#   colnames(mahala) = names #set colnames in the dissimilarity matrix
+#   return(mahala <- as.dist(mahala)) #this is the mahalanobis dissimilarity matrix 
+# } # return mahalanobis dissimilarity matrix
+# 
+# 
+# # ANTERIOR VERTEBRAE #
+# ANTTotal <- rbind(TrunkAnt[,1:8], TrunkFossilAnt)
+# Mahala1ANT = pairwise.mahalanobis(ANTTotal[,1:7], ANTTotal$species, digits = 3)
+# Mah_DisAnt <- Mah_Dis(Mahala1ANT)
+# 
+# trANT <- nj(Mah_DisAnt) #neighbor joining
+# 
+# plot((as.phylo(trANT)),type="unrooted",cex=0.6,
+#      use.edge.length=TRUE,lab4ut="axial",
+#      no.margin=TRUE)
+# 
+# # MIDDLE VERTEBRAE #
+# MIDTotal <- rbind(TrunkMid[,1:8], TrunkFossilT8)
+# Mahala1MID = pairwise.mahalanobis(MIDTotal[,1:7], MIDTotal$species, digits = 3)
+# Mah_DisMID <- Mah_Dis(Mahala1MID)
+# 
+# trMID <- nj(Mah_DisMID) #neighbor joining
+# 
+# plot((as.phylo(trMID)),type="unrooted",cex=0.6,
+#      use.edge.length=TRUE,lab4ut="axial",
+#      no.margin=TRUE)
+# 
+# 
+# # POSTERIOR VERTEBRAE #
+# POSTTotal <- rbind(TrunkPost[,1:8], TrunkFossilT12)
+# Mahala1POST = pairwise.mahalanobis(POSTTotal[,1:7], POSTTotal$species, digits = 3)
+# Mah_DisPOST <- Mah_Dis(Mahala1POST)
+# 
+# trPOST <- nj(Mah_DisPOST) #neighbor joining
+# 
+# plot((as.phylo(trPOST)),type="unrooted",cex=0.6,
+#      use.edge.length=TRUE,lab4ut="axial",
+#      no.margin=TRUE)# MIDDLE VERTEBRAE #
+# 
+# 
+# # SACRAL VERTEBRAE #
+# SCTotal <- rbind(Sc[,1:8], TrunkFossilSc)
+# Mahala1SC = pairwise.mahalanobis(SCTotal[,1:7], SCTotal$species, digits = 3)
+# Mah_DisSC <- Mah_Dis(Mahala1SC)
+# 
+# trSC <- nj(Mah_DisSC) #neighbor joining
+# 
+# plot((as.phylo(trSC)),type="unrooted",cex=0.6,
+#      use.edge.length=TRUE,lab4ut="axial",
+#      no.margin=TRUE)# MIDDLE VERTEBRAE #
 
 
 
-# AMBYSTOMA CLADE CLASSIFICATION #
+
+
+# AMBYSTOMA CLADE CLASSIFICATION #______________________________________________________
 
 TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 TrunkMid_sub$clades <- dplyr::recode(TrunkMid_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
@@ -963,7 +1157,7 @@ TrunkPost_sub$clades <- dplyr::recode(TrunkPost_sub$species, A.gracile = "A", A.
 TrunkSc_sub$clades <- dplyr::recode(TrunkSc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 
 
-### K NEAREST NEIGHBOR CLADES ###:Non-parametric
+### K NEAREST NEIGHBOR CLADES ###:Non-parametric______________________________________________________
 library(caret)
 
 #make KNN model using LOOCV to find optimal k
@@ -1137,7 +1331,7 @@ accKNN_ant_clade
 
 
 
-## KNN FOSSIL CLADE CLASSIFICATIONS ##
+## KNN FOSSIL CLADE CLASSIFICATIONS ##______________________________________________________
 library(class)
 
 # ANTERIOR FOSSILS #
@@ -1187,7 +1381,7 @@ KnnSCPrediction
 
 
 
-### RANDOM FOREST CLADE CLASSIFICATION ###:Non-parametric
+### RANDOM FOREST CLADE CLASSIFICATION ###:Non-parametric______________________________________________________
 library(randomForest)
 
 # ANTERIOR VERTEBRAE #
@@ -1280,76 +1474,13 @@ y_pred_sc_clade
 
 
 
-# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #
-library(tidyverse)
-library(skimr)
-library(knitr)
-library(party)
-library(GGally)
-ggpairs(TrunkPost_sub[,1:7])
-
-
-
-create_crfplot <- function(rf, conditional = TRUE){
-  
-  imp <- rf %>%
-    varimp(conditional = conditional) %>% 
-    as_tibble() %>% 
-    rownames_to_column("Feature") %>% 
-    rename(Importance = value)
-  
-  p <- ggplot(imp, aes(x = reorder(Feature, Importance), y = Importance)) +
-    geom_bar(stat = "identity", fill = "#53cfff", width = 0.65) +
-    coord_flip() + 
-    theme_light(base_size = 20) +
-    theme(axis.title.x = element_text(size = 15, color = "black"),
-          axis.title.y = element_blank(),
-          axis.text.x  = element_text(size = 15, color = "black"),
-          axis.text.y  = element_text(size = 15, color = "black"))  + theme_classic()
-  return(p)
-}
-
-# CONDITIONAL PERUMATATION IMPORTANCE # *long time to run
-
-Atlas.rf_ant_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, 
-  data=TrunkAnt_sub,
-  control = cforest_unbiased(mtry = 2, ntree = 500)
-)
-Atlas.rf_ant_impplot <- create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
-
-
-Atlas.rf_mid_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkMid_sub,
-  control = cforest_unbiased(mtry = 2, ntree = 500)
-)
-Atlas.rf_mid_impplot <- create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
-
-
-Atlas.rf_post_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=TrunkPost_sub,
-  control = cforest_unbiased(mtry = 2, ntree = 500)
-)
-Atlas.rf_post_impplot <- create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
-
-
-Atlas.rf_sc_imp <- cforest(
-  clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=TrunkSc_sub,
-  control = cforest_unbiased(mtry = 2, ntree = 500)
-)
-Atlas.rf_sc_impplot <- create_crfplot(Atlas.rf_sc_imp, conditional = TRUE)
-
-
-# PLOT ALL TOGETHER #
-par(oma=c(0,0,2,0))
-gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_post_impplot, Atlas.rf_sc_impplot,nrow = 2)
 
 
 
 
 
 
-### SEXUAL DIMORPHISM? ###
+### SEXUAL DIMORPHISM? ###______________________________________________________
 
 PoAtVerts_sex <-  Amb_linear_data[c(6:7, 14:48, 53:55)] #select only relevant Post atlantal measurements
 
