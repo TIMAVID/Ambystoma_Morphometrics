@@ -27,6 +27,7 @@ library(tidyverse)
 # SUBSET DATA FOR EACH VERTEBRA #
 T1 <- dplyr::select(PoAtVerts_wofossil, contains("a", ignore.case = FALSE),  contains("species")) %>% drop_na()
 
+
 T4 <- dplyr::select(PoAtVerts_wofossil, contains("b", ignore.case = FALSE), contains("species")) %>% drop_na()
 
 T8 <- dplyr::select(PoAtVerts_wofossil, contains("c", ignore.case = FALSE), contains("species")) %>% drop_na()
@@ -37,9 +38,108 @@ T8_extension <- dplyr::select(PoAtVerts_wofossil, contains("Cen"), contains("spe
 T12<- dplyr::select(PoAtVerts_wofossil, contains("d", ignore.case = FALSE), contains("species")) %>% drop_na()
 
 Sc <- dplyr::select(PoAtVerts_wofossil, num_range("X", 14:20), contains("species")) %>% drop_na()
+
+
+# PCA PLOT OF MODERN SPECIMENS #
+
+library(ggplot2)
+library(ggforce)
+library(ggfortify)
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
+
+
+# T1 & T4 "Anterior trunk" #
+#"Anterior"(1,4) comparative verts
+
+T1_comb <- T1 %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "a")
+T1_comb <- T1_comb %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+
+T4_comb <- T4 %>% dplyr::rename(X1a = 1, X2a=2, X3a=3,X4a=4,X5a=5,X6a=6, X7a=7)
+T4_comb <- T4_comb %>%                          # Applying row_number function
+  dplyr::mutate(Vert = "b")
+
+TrunkAnt <- rbind(T1_comb, T4_comb)
+
+T1_4.pca <- prcomp(TrunkAnt[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+percentage_T1_4 <- round(T1_4.pca$sdev^2 / sum(T1_4.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
+percentage_T1_4 <- paste(colnames(T1_4.pca$x),"(", paste( as.character(percentage_T1_4), "%", ")", sep="") )
+T1_4.scores <- data.frame(T1_4.pca$x, species = TrunkAnt$species)
+T1_4loadings <- data.frame(Variables = rownames(T1_4.pca$rotation), T1_4.pca$rotation)# Extract loadings of the variables
+
+T1_4_plot<-ggplot(T1_4.scores,aes(x=PC1,y=PC2,color=species)) + 
+  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
+  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
+  #                                       label = T1loadings$Variables) +
+  geom_point(size =2)+ xlab(percentage_T1_4[1]) + ylab(percentage_T1_4[2]) +
+  scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors)) + 
+  theme_classic() + ggtitle("Anterior trunk vertebrae") + theme(legend.position = "none")
+T1_4_plot
+
+
+
+# T8 "Middle trunk vertebrae #
+T8.pca <- prcomp(T8[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+percentage_T8 <- round(T8.pca$sdev^2 / sum(T8.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
+percentage_T8 <- paste(colnames(T8.pca$x),"(", paste( as.character(percentage_T8), "%", ")", sep="") )
+T8.scores <- data.frame(T8.pca$x, species = T8$species)
+T8loadings <- data.frame(Variables = rownames(T8.pca$rotation), T8.pca$rotation)# Extract loadings of the variables
+
+T8_plot<-ggplot(T8.scores,aes(x=PC1,y=PC2,color=species)) + 
+  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
+  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
+  #                                       label = T1loadings$Variables) +
+  geom_point(size =2)+ xlab(percentage_T8[1]) + ylab(percentage_T8[2]) +
+  scale_color_manual(name = "Species", breaks=levels(T8$species), values=c(speciescolors)) + 
+  theme_classic() + ggtitle("T8") + theme(legend.position = "none")
+T8_plot
+
+
+# T12 "Posterior trunk vertebrae #
+T12.pca <- prcomp(T12[c(1:7)], center = TRUE, scale = FALSE) # PCA
+
+percentage_T12 <- round(T12.pca$sdev^2 / sum(T12.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
+percentage_T12 <- paste(colnames(T12.pca$x),"(", paste( as.character(percentage_T8), "%", ")", sep="") )
+T12.scores <- data.frame(T12.pca$x, species = T8$species)
+T12loadings <- data.frame(Variables = rownames(T12.pca$rotation), T12.pca$rotation)# Extract loadings of the variables
+
+T12_plot<-ggplot(T12.scores,aes(x=PC1,y=PC2,color=species)) + 
+  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
+  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
+  #                                       label = T1loadings$Variables) +
+  geom_point(size =2)+ xlab(percentage_T12[1]) + ylab(percentage_T12[2]) +
+  scale_color_manual(name = "Species", breaks=levels(T12$species), values=c(speciescolors)) + 
+  theme_classic() + ggtitle("T12") + theme(legend.position = "none")
+T12_plot
+
+
+# SC Sacral vertebrae #
 Sc.pca <- prcomp(Sc[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
+percentage_SC <- round(Sc.pca$sdev^2 / sum(Sc.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
+percentage_SC <- paste(colnames(Sc.pca$x),"(", paste( as.character(percentage_SC), "%", ")", sep="") )
+SC.scores <- data.frame(Sc.pca$x, species = Sc$species)
+SCloadings <- data.frame(Variables = rownames(Sc.pca$rotation), Sc.pca$rotation)# Extract loadings of the variables
 
+SC_plot<-ggplot(SC.scores,aes(x=PC1,y=PC2,color=species)) + 
+  # geom_segment(data = SCloadings, aes(x = 0, y = 0, xend = (PC1),
+  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
+  #                                       label = T1loadings$Variables) +
+  geom_point(size =2)+ xlab(percentage_SC[1]) + ylab(percentage_SC[2]) +
+  scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors)) + 
+  theme_classic() + ggtitle("SC") + theme(legend.position = "none")
+SC_plot
+
+
+# PLOT ALL TOGETHER #
+par(oma=c(0,0,2,0))
+gridExtra::grid.arrange(T1_4_plot, T8_plot ,T12_plot,SC_plot,nrow = 2)
 
 
 
@@ -180,6 +280,22 @@ CenPlot + scale_x_discrete(breaks=c("Cenratioa","Cenratiob","Cenratioc", "Cenrat
 
 
 
+# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #
+
+library(EnvStats)
+T8_extension
+
+T8_extension<-dplyr::mutate(T8_extension ,ratio = Cen_to_NeuAr/Cen_to_PoZy, .before = Cen_to_PoZy) #add new column for ratio
+
+library(tidyr)
+data_long <- gather(T8_extension, Type , Measurement, Cen_to_NeuAr:Cen_to_PoZy, factor_key=TRUE) #convert to long format
+
+library(ggplot2)
+s <- ggplot(data_long, aes(Type, Measurement, fill = Type)) + 
+  geom_boxplot(position = "dodge") + theme_classic() + ylab("Value") +
+  theme(legend.position="bottom") + scale_fill_discrete(name = "Measurement Type", labels= c("NSPE", "NSPE/PoZyPE", "PoZyPE"))
+s <- s + facet_wrap(~species, ncol = 5) + stat_n_text()
+s
 
 
 # ## Phylogenetic signal ##
@@ -242,7 +358,7 @@ CenPlot + scale_x_discrete(breaks=c("Cenratioa","Cenratiob","Cenratioc", "Cenrat
 
 
 
-# MAKE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #
+# MAKE CONSERVATIVE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #
 
 #"Anterior"(1,4) comparative verts
 
@@ -435,22 +551,6 @@ gridExtra::grid.arrange(Ant_plot, Mid_plot ,Post_plot,Sc_plot,nrow = 2)
 
 
 
-# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #
-
-library(EnvStats)
-T8_extension
-
-T8_extension<-dplyr::mutate(T8_extension ,ratio = Cen_to_NeuAr/Cen_to_PoZy, .before = Cen_to_PoZy) #add new column for ratio
-
-library(tidyr)
-data_long <- gather(T8_extension, Type , Measurement, Cen_to_NeuAr:Cen_to_PoZy, factor_key=TRUE) #convert to long format
-
-library(ggplot2)
-s <- ggplot(data_long, aes(Type, Measurement, fill = Type)) + 
-  geom_boxplot(position = "dodge") + theme_classic() + ylab("Value") +
-  theme(legend.position="bottom") + scale_fill_discrete(name = "Measurement Type", labels= c("NSPE", "NSPE/PoZyPE", "PoZyPE"))
-s <- s + facet_wrap(~species, ncol = 5) + stat_n_text()
-s
 
 # Assess sample size per species
 library(tidyverse)
