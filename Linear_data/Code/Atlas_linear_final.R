@@ -12,7 +12,7 @@ library(dplyr)
 
 Atlas <-  Amb_linear_data[c(3, 8:13, 54:55)] #select only relevant atlas measurements
 
-# REMOVE FOSSILS AND TUBERCULUM INTERGLENOIDEUM MEASUREMENT #
+# REMOVE FOSSILS AND TUBERCULUM INTERGLENOIDEUM MEASUREMENT #---------------------------------
 Atlas_wofossil <- dplyr::filter(Atlas, !grepl('41229*', species)) # remove fossils
 row.names(Atlas_wofossil) <- Atlas_wofossil$specimen_num
 Atlas_wofossil$species <- factor(Atlas_wofossil$species, levels = 
@@ -24,7 +24,7 @@ Atlas_wofossil_noTub <- na.omit(Atlas_wofossil_noTub) # remove rows with N/A's
 Atlas_wofossil_noTub <- subset(Atlas_wofossil_noTub, select=-c(specimen_num))
 
 
-## SUBSET DATA FOR FOSSILS ONLY ##
+## SUBSET DATA FOR FOSSILS ONLY ##---------------------------------
 
 Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
 Atlas_fossil <- na.omit(Atlas_fossil) # remove rows with N/A's
@@ -34,7 +34,7 @@ Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, sp
 
 
 
-## PRINCIPAL COMPONENT ANALYSIS ##
+## PRINCIPAL COMPONENT ANALYSIS ##---------------------------------
 
 Atlas.pca <- prcomp(Atlas_wofossil_noTub[c(1:6)], center = TRUE, scale = FALSE) # PCA
 PC_scores <- as.data.frame(Atlas.pca$x)
@@ -65,7 +65,7 @@ p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) +
 p
 
 
-# TUBERCULUM INTERGLENOIDEUM PLOT #
+# TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------
 
 library(EnvStats)
 Tub_dat <- Atlas_wofossil[c(1,9)]
@@ -80,7 +80,7 @@ ventral_extension_p
 
 
 
-### STATISTICAL TESTS ###
+### STATISTICAL TESTS ###---------------------------------
 # *removed A. subsalsum and A. ordinarium* see code above for removal process
 Atlas_wofossil_noTub_sub <- dplyr::filter(Atlas_wofossil_noTub, !grepl('A.subsalsum|A.ordinarium', species))
 Atlas_wofossil_noTub_sub$species <- factor(Atlas_wofossil_noTub_sub$species, levels = 
@@ -92,7 +92,7 @@ Atlas_wofossil_noTub_sub %>%
   dplyr::group_by(species) %>%
   dplyr::summarise(N = n())
 
-## PERMUTATION MANOVA ##
+## PERMUTATION MANOVA ##---------------------------------
 library(RVAideMemoire)
 require(vegan)
 
@@ -108,7 +108,7 @@ ppEMANOVA <- pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean
 # write.table(t, file = "Atlas linear PWMAN", sep = ",", quote = FALSE, row.names = T)
 
 
-# TUBERCULUM INTERGLENOIDEUM Permutational ANOVA #
+# TUBERCULUM INTERGLENOIDEUM Permutational ANOVA #---------------------------------
 Tub_dat <- dplyr::filter(Tub_dat, !grepl('A.subsalsum|A.ordinarium', species))
 Tub_dat$species <- factor(Tub_dat$species, levels = 
                                              c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
@@ -130,7 +130,7 @@ t <-pairwise.perm.t.test(Tub_dat$tub_interglen_extension,Tub_dat$species,nperm=9
 
 
 
-### K NEAREST NEIGHBOR   ###:Non-parametric
+### K NEAREST NEIGHBOR   ###:Non-parametric---------------------------------
 library(caret)
 
 
@@ -190,7 +190,7 @@ KnnTestPrediction_k6
 
 
 
-### RANDOM FOREST CLASSIFICATION ###:Non-parametric
+### RANDOM FOREST CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 set.seed(123)
 Atlas.rf <- randomForest(species ~ ., data=Atlas_wofossil_noTub_sub, importance=TRUE)
@@ -214,7 +214,7 @@ y_pred
 
 
 
-# AMBYSTOMA CLADE CLASSIFICATION #
+# AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
 
 species <- Atlas_wofossil_noTub_sub$species
 clades <- dplyr::recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
@@ -269,7 +269,7 @@ KnnTestPrediction_k9
 
 
 
-# RANDOM FOREST WITH CLADES #
+# RANDOM FOREST WITH CLADES #---------------------------------
 set.seed(123)
 Atlas.rf_clades <- randomForest(clades ~ ., data=Atlas_wofossil_noTub_sub_clade, importance=TRUE)
 print(Atlas.rf_clades)
@@ -291,7 +291,7 @@ y_pred_clade
 
 
 
-### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
+### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###---------------------------------
 Atlas_noNA <- na.omit(Atlas) # remove rows with N/A's
 Atlas_noNA <- subset(Atlas_noNA, select=-c(specimen_num))
 
@@ -331,7 +331,7 @@ plot((as.phylo(tr)),type="unrooted",cex=0.6,
 
 
 
-# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #
+# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #---------------------------------
 
 library(tidyverse)
 library(skimr)

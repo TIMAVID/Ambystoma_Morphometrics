@@ -25,7 +25,7 @@ s <-cbind(specimenList, species)
 
 
 
-## SUBSET DATA FOR FOSSILS ONLY ##
+## SUBSET DATA FOR FOSSILS ONLY ##---------------------------------
 
 library(tidyverse)
 new <- list(land = raw_data$coords , species=s$species, specimen = s$V2, size = raw_data$Csize)
@@ -105,7 +105,7 @@ attributes(GMM_data_fossil$land)$dimnames[[3]] <- Fossilspecimens$specimenName
 
 
 
-## SUBSET DATA TO REMOVE FOSSILS ##
+## SUBSET DATA TO REMOVE FOSSILS ##---------------------------------
 
 # I first subset the original landmark data. 
 # Data Processing
@@ -170,7 +170,7 @@ attributes(GMM_data_noFossil$land)$dimnames[[3]] <- specimens$specimenName
 
 
 
-## SUBSET DATA TO REMOVE A. subsalsum & A. ordinarium ##
+## SUBSET DATA TO REMOVE A. subsalsum & A. ordinarium ##---------------------------------
 
 # I first subset the original landmark data. 
 # Data Processing
@@ -235,7 +235,7 @@ attributes(GMM_data_sub$land)$dimnames[[3]] <- specimens$specimenName
 
 
 
-# CREATE GMM DATAFRAMES 1) WITHOUT FOSSILS 2) WITHOUT FOSSILS & W/O A. SUBSALSUM AND A.ORDINARIUM 3) FOSSIL ONLY #
+# CREATE GMM DATAFRAMES 1) WITHOUT FOSSILS 2) WITHOUT FOSSILS & W/O A. SUBSALSUM AND A.ORDINARIUM 3) FOSSIL ONLY #---------------------------------
 GMM_data_noFossil <-geomorph.data.frame(coords=GMM_data_noFossil$land,
                                size=GMM_data_noFossil$size, species=GMM_data_noFossil$species)
 GMM_data_noFossil$species <- factor(GMM_data_noFossil$species, levels = 
@@ -253,7 +253,7 @@ GMM_data_fossil <-geomorph.data.frame(coords=GMM_data_fossil$land,
 
 
 
-## PRINCIPAL COMPONENT ANALYSIS ##
+## PRINCIPAL COMPONENT ANALYSIS ##---------------------------------
 
 GMM_data_noFossil$coords <- two.d.array(GMM_data_noFossil$coords) #get the data in XY format for PCA
 Amb_fossil_coords <- two.d.array(GMM_data_fossil$coords) #get the data in XY format for PCA
@@ -287,7 +287,7 @@ p
 
 
 
-### STATISTICAL TESTS ###
+### STATISTICAL TESTS ###---------------------------------
 # *removed A. subsalsum and A. ordinarium* see code above for removal process
 library(report)
 ## ANOVA ##
@@ -328,7 +328,7 @@ summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
 
 
 
-### K NEAREST NEIGHBOR   ###:Non-parametric
+### K NEAREST NEIGHBOR   ###:Non-parametric---------------------------------
 
 GMM_data_sub$coords <- two.d.array(GMM_data_sub$coords) #get the data in XY format for PCA
 Amb_PCA_sub <- prcomp(GMM_data_sub$coords) #PCA
@@ -394,7 +394,7 @@ write.table(KnnTestPrediction_k3, file = "GMM fossil KNN", sep = ",", quote = FA
 
 
 
-### RANDOM FOREST CLASSIFICATION ###:Non-parametric
+### RANDOM FOREST CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 set.seed(123)
 Atlas.rf <- randomForest(species ~ ., data=Atlas_PC_scores, importance=TRUE)
@@ -419,7 +419,7 @@ y_pred
 
 
 
-# AMBYSTOMA CLADE CLASSIFICATION #
+# AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
 
 species=GMM_data_sub$species
 clades <- dplyr::recode(species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
@@ -475,7 +475,7 @@ KnnTestPrediction_k8
 
 
 
-# RANDOM FOREST WITH CLADES #
+# RANDOM FOREST WITH CLADES #---------------------------------
 set.seed(123)
 Atlas.rf_clades <- randomForest(clades ~ ., data=Atlas_PC_scores_clade, importance=TRUE)
 print(Atlas.rf_clades)
@@ -497,7 +497,7 @@ y_pred_clade
 
 
 
-# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###
+# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###---------------------------------
 # 
 # library(HDMD)
 # Mahala1 = pairwise.mahalanobis(All_PC_scores[,1:12], All_PC_scores$species, digits = 3)
