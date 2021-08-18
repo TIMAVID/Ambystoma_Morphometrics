@@ -40,7 +40,7 @@ Atlas.pca <- prcomp(Atlas_wofossil_noTub[c(1:6)], center = TRUE, scale = FALSE) 
 PC_scores <- as.data.frame(Atlas.pca$x)
 PC_scores <- cbind(PC_scores, species= Atlas_wofossil_noTub$species)
 
-percentage <- round(Atlas.pca$sdev / sum(Atlas.pca$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage <- round(Atlas.pca$sdev^2 / sum(Atlas.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), "%", ")", sep="") )
 
 # PROJECT FOSSIL DATA #

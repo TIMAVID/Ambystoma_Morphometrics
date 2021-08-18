@@ -268,7 +268,6 @@ accKNNT8
 
 # LOOCV WITH REPLICATION
 
-
 set.seed(123)
 runs <- 100
 # system.time({
@@ -304,12 +303,6 @@ accKNNT12
 # write.table(t, file = "T12 species KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
-
-
-
-
-
-
 ### RANDOM FOREST CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 
@@ -328,20 +321,157 @@ rf_acc_ant
 mean(Atlas.rf_ant$predicted == TrunkAnt_sub$species) #overall accuracy
 
 
+# T8 #
+set.seed(123)
+Atlas.rf_T8 <- randomForest(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c, data=Trunk8_sub, importance=FALSE)
+print(Atlas.rf_T8)
+rf_acc_T8 <- Atlas.rf_T8$confusion
+rf_acc_T8 <- 1-rf_acc_T8[,14] # percent correct classification
+rf_acc_T8
+
+# t <- rf_acc_T8
+# t <-round(t, digits = 2)
+# write.table(t, file = "T8 RFAC species", sep = ",", quote = FALSE, row.names = T)
+
+mean(Atlas.rf_T8$predicted == Trunk8_sub$species) #overall accuracy
 
 
+# T12 #
+set.seed(123)
+Atlas.rf_T12 <- randomForest(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d, data=Trunk12_sub, importance=FALSE)
+print(Atlas.rf_T12)
+rf_acc_T12 <- Atlas.rf_T12$confusion
+rf_acc_T12 <- 1-rf_acc_T12[,14] # percent correct classification
+rf_acc_T12
+
+# t <- rf_acc_T12
+# t <-round(t, digits = 2)
+# write.table(t, file = "T12 RFAC species", sep = ",", quote = FALSE, row.names = T)
+
+mean(Atlas.rf_T12$predicted == Trunk12_sub$species) #overall accuracy
 
 
 # AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
 
-TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Trunk8_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Trunk12_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-Sc_sub$clades <- dplyr::recode(Sc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+
+
+### K NEAREST NEIGHBOR CLADES ###:Non-parametric---------------------------------
+library(caret)
+
+## T8 VERTEBRAE ##
+
+# LOOCV WITH REPLICATION
+
+
+set.seed(123)
+runs <- 100
+# system.time({
+#   fishT8clades <- foreach(icount(runs)) %dopar% {
+#     train(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk8_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
+
+fishT8clades <- map_dfr(fishT8clades,`[`, c("k", "Accuracy", "Kappa"))
+kfishT8clades <- fishT8clades %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishT8clades <- kfishT8clades[1,] # k with highest accuracy
+
+set.seed(123)
+predicted.classes_T8clades <- train(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+                              method     = "knn",
+                              tuneGrid   = expand.grid(k = 3),
+                              trControl  = trainControl(method  = "LOOCV"),
+                              metric     = "Accuracy",
+                              data       = Trunk8_sub)$pred # predict class based on KNN model
+mean(predicted.classes_T8clades$pred == predicted.classes_T8clades$obs) #overall accuracy
+
+accKNNT8clades <- table(predicted.classes_T8clades$obs,predicted.classes_T8clades$pred)
+accKNNT8clades
+# t <- diag(prop.table(accKNNT8clades, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "T8 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
+## T12 VERTEBRAE ##
 
+# LOOCV WITH REPLICATION
+
+set.seed(123)
+runs <- 100
+# system.time({
+#   fishT12clades <- foreach(icount(runs)) %dopar% {
+#     train(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk12_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
+
+fishT12clades <- map_dfr(fishT12clades,`[`, c("k", "Accuracy", "Kappa"))
+kfishT12clades <- fishT12clades %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishT12clades <- kfishT12clades[1,] # k with highest accuracy
+
+set.seed(123)
+predicted.classes_T12clades <- train(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+                               method     = "knn",
+                               tuneGrid   = expand.grid(k = 3),
+                               trControl  = trainControl(method  = "LOOCV"),
+                               metric     = "Accuracy",
+                               data       = Trunk12_sub)$pred # predict class based on KNN model
+mean(predicted.classes_T12clades$pred == predicted.classes_T12clades$obs) #overall accuracy
+
+accKNNT12clades <- table(predicted.classes_T12clades$obs,predicted.classes_T12clades$pred)
+accKNNT12clades
+# t <- diag(prop.table(accKNNT12clades, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "T12 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+### RANDOM FOREST CLADE CLASSIFICATION ###:Non-parametric---------------------------------
+library(randomForest)
+
+# T8 #
+set.seed(123)
+Atlas.rf_T8clades <- randomForest(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c, data=Trunk8_sub, importance=FALSE)
+print(Atlas.rf_T8clades)
+rf_acc_T8clades <- Atlas.rf_T8clades$confusion
+rf_acc_T8clades <- 1-rf_acc_T8clades[,14] # percent correct classification
+rf_acc_T8clades
+
+# t <- rf_acc_T8clades
+# t <-round(t, digits = 2)
+# write.table(t, file = "T8 RFAC clades", sep = ",", quote = FALSE, row.names = T)
+
+mean(Atlas.rf_T8clades$predicted == Trunk8_sub$clades) #overall accuracy
+
+
+# T12 #
+set.seed(123)
+Atlas.rf_T12clades <- randomForest(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d, data=Trunk12_sub, importance=FALSE)
+print(Atlas.rf_T12clades)
+rf_acc_T12clades <- Atlas.rf_T12clades$confusion
+rf_acc_T12clades <- 1-rf_acc_T12clades[,14] # percent correct classification
+rf_acc_T12clades
+
+# t <- rf_acc_T12clades
+# t <-round(t, digits = 2)
+# write.table(t, file = "T12 RFAC clades", sep = ",", quote = FALSE, row.names = T)
+
+mean(Atlas.rf_T12clades$predicted == Trunk12_sub$clades) #overall accuracy
 
 
 
@@ -353,7 +483,7 @@ library(skimr)
 library(knitr)
 library(party)
 library(GGally)
-ggpairs(TrunkPost_sub[,1:7])
+
 
 
 
@@ -733,7 +863,7 @@ speciesshapes <- c(rep(16,15), rep(18,50))
 library(ggplot2)
 library(ggforce)
 
-percentage_ant <- round(TrunkAnt.pca$sdev / sum(TrunkAnt.pca$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage_ant <- round(TrunkAnt.pca$sdev^2 / sum(TrunkAnt.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_ant <- paste( colnames(Antscores), "(", paste( as.character(percentage_ant), "%", ")", sep="") )
 
 Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
@@ -757,7 +887,7 @@ FossilMID_PC_scores <-data.frame(TrunkFossilMID_PCA, species= TrunkFossilT8$spec
 
 All_MIDPC_scores <- (rbind(MIDscores, FossilMID_PC_scores)) # create a new dataframe with the original PC scores and the PC scores of your fossil
 
-percentage_mid <- round(TrunkMid.pca$sdev / sum(TrunkMid.pca$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage_mid <- round(TrunkMid.pca$sdev^2 / sum(TrunkMid.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_mid <- paste( colnames(MIDscores), "(", paste( as.character(percentage_mid), "%", ")", sep="") )
 
 # PLOT #
@@ -782,7 +912,7 @@ FossilPOST_PC_scores <-data.frame(TrunkFossilPOST_PCA, species= TrunkFossilT12$s
 
 All_POSTPC_scores <- (rbind(POSTscores, FossilPOST_PC_scores)) # create a new dataframe with the original PC scores and the PC scores of your fossil
 
-percentage_post <- round(TrunkPost.pca$sdev / sum(TrunkPost.pca$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage_post <- round(TrunkPost.pca$sdev^2 / sum(TrunkPost.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_post <- paste( colnames(POSTscores), "(", paste( as.character(percentage_post), "%", ")", sep="") )
 
 # PLOT #
@@ -808,7 +938,7 @@ FossilSC_PC_scores <- data.frame(FossilSC_PCA, species= TrunkFossilSc$species)
 
 All_SCPC_scores <- (rbind(SCscores, FossilSC_PC_scores)) # create a new dataframe with the original PC scores and the PC scores of your fossil
 
-percentage_Sc <- round(Sc.pca$sdev / sum(Sc.pca$sdev) * 100, 2)# find percentage variance explained by PC's
+percentage_Sc <- round(Sc.pca$sdev^2 / sum(Sc.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_Sc <- paste( colnames(SCscores), "(", paste( as.character(percentage_Sc), "%", ")", sep="") )
 
 # PLOT #
