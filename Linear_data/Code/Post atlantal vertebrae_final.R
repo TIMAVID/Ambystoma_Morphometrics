@@ -1,5 +1,5 @@
 ## Load in data ##
-# Read in csv file of data
+# Read in csv file of data---------------------------------
 library(curl)
 f2 <- curl("https://raw.githubusercontent.com/TIMAVID/Ambystoma/master/Linear_data/Data/Amb_linear_data_final.csv")
 Amb_linear_data <- read.csv(f2, header = TRUE, sep = ",", stringsAsFactors = TRUE) # this is a matrix of each specimen  
@@ -24,7 +24,7 @@ PoAtVerts_wofossil$species <- factor(PoAtVerts_wofossil$species, levels =
 
 library(tidyverse)
 
-# SUBSET DATA FOR EACH VERTEBRA #______________________________________________________
+# SUBSET DATA FOR EACH VERTEBRA #---------------------------------
 T1 <- dplyr::select(PoAtVerts_wofossil, contains("a", ignore.case = FALSE),  contains("species")) %>% drop_na()
 
 
@@ -40,7 +40,7 @@ T12<- dplyr::select(PoAtVerts_wofossil, contains("d", ignore.case = FALSE), cont
 Sc <- dplyr::select(PoAtVerts_wofossil, num_range("X", 14:20), contains("species")) %>% drop_na()
 
 
-# PCA PLOT OF MODERN SPECIMENS #______________________________________________________
+# PCA PLOT OF MODERN SPECIMENS #---------------------------------
 
 library(ggplot2)
 library(ggforce)
@@ -75,7 +75,7 @@ T1_4_plot<-ggplot(T1_4.scores,aes(x=PC1,y=PC2,color=species)) +
   #                                       label = T1loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T1_4[1]) + ylab(percentage_T1_4[2]) +
   scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("Anterior trunk vertebrae") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none")
 T1_4_plot
 
 
@@ -103,7 +103,7 @@ T8_plot
 T12.pca <- prcomp(T12[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
 percentage_T12 <- round(T12.pca$sdev^2 / sum(T12.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
-percentage_T12 <- paste(colnames(T12.pca$x),"(", paste( as.character(percentage_T8), "%", ")", sep="") )
+percentage_T12 <- paste(colnames(T12.pca$x),"(", paste(as.character(percentage_T12), "%", ")", sep="") )
 T12.scores <- data.frame(T12.pca$x, species = T8$species)
 T12loadings <- data.frame(Variables = rownames(T12.pca$rotation), T12.pca$rotation)# Extract loadings of the variables
 
@@ -144,7 +144,7 @@ gridExtra::grid.arrange(T1_4_plot, T8_plot ,T12_plot,SC_plot,nrow = 2)
 
 
 
-# *removed A. subsalsum and A. ordinarium* #______________________________________________________
+# *removed A. subsalsum and A. ordinarium* #---------------------------------
 
 #Anterior vertebrae
 
@@ -171,13 +171,12 @@ Sc_sub$species <- droplevels(Sc_sub$species)
 
 
 
-### K NEAREST NEIGHBOR   ###:Non-parametric______________________________________________________
+### K NEAREST NEIGHBOR   ###:Non-parametric---------------------------------
 library(caret)
 
 #make KNN model using LOOCV to find optimal k
 
-# SACRAL VERTEBRAE #
-
+# T1&4 VERTEBRAE #
 
 # LOOCV WITH REPLICATION
 library(foreach)
@@ -186,39 +185,123 @@ ncore <- detectCores()
 registerDoParallel(cores=ncore)
 
 set.seed(123)
-runs <- 1
+runs <- 100
 # system.time({
-#   fishSc <- foreach(icount(runs)) %dopar% {
-#     train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+#   fishT1 <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
 #           method     = "knn",
 #           tuneGrid   = expand.grid(k = 1:17),
 #           trControl  = trainControl(method  = "LOOCV"),
 #           metric     = "Accuracy",
-#           data       = TrunkSc_sub)$results
+#           data       = TrunkAnt_sub)$results
 #   }
 # }) #repeated KNN model using LOOCV to find optimal k
 
-fishSc <- map_dfr(fishSc,`[`, c("k", "Accuracy", "Kappa"))
-kfishSc <- fishSc %>% 
+fishT1 <- map_dfr(fishT1,`[`, c("k", "Accuracy", "Kappa"))
+kfishT1 <- fishT1 %>% 
   filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
   select(k) # select column k
-kfishSc <- kfishSc[1,] # k with highest accuracy
+kfishT1 <- kfishT1[1,] # k with highest accuracy
 
 
 set.seed(123)
-predicted.classes_sc <- train(species ~ X14 + X15 + X16 + X17 + X18 + X19 + X20,
+predicted.classes_T1 <- train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
                               method     = "knn",
                               tuneGrid   = expand.grid(k = 3),
                               trControl  = trainControl(method  = "LOOCV"),
                               metric     = "Accuracy",
-                              data       = TrunkSc_sub)$pred # predict class based on KNN model
-mean(predicted.classes_sc$pred == predicted.classes_sc$obs) #overall accuracy
+                              data       = TrunkAnt_sub)$pred # predict class based on KNN model
+mean(predicted.classes_T1$pred == predicted.classes_T1$obs) #overall accuracy
 
-accKNNsc <- table(predicted.classes_sc$obs,predicted.classes_sc$pred)
-accKNNsc
-# t <- diag(prop.table(accKNNsc, 1))
+accKNNT1 <- table(predicted.classes_T1$obs,predicted.classes_T1$pred)
+accKNNT1
+# t <- diag(prop.table(accKNNT1, 1))
 # t <-round(t, digits = 2)
-# write.table(t, file = "Sacral species KNNAC", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "T1 species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
+
+## T8 VERTEBRAE ##
+
+# LOOCV WITH REPLICATION
+
+
+set.seed(123)
+runs <- 100
+# system.time({
+#   fishT8 <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk8_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
+
+fishT8 <- map_dfr(fishT8,`[`, c("k", "Accuracy", "Kappa"))
+kfishT8 <- fishT8 %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishT8 <- kfishT8[1,] # k with highest accuracy
+
+set.seed(123)
+predicted.classes_T8 <- train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+                              method     = "knn",
+                              tuneGrid   = expand.grid(k = 3),
+                              trControl  = trainControl(method  = "LOOCV"),
+                              metric     = "Accuracy",
+                              data       = Trunk8_sub)$pred # predict class based on KNN model
+mean(predicted.classes_T8$pred == predicted.classes_T8$obs) #overall accuracy
+
+accKNNT8 <- table(predicted.classes_T8$obs,predicted.classes_T8$pred)
+accKNNT8
+# t <- diag(prop.table(accKNNT8, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "T8 species KNNAC", sep = ",", quote = FALSE, row.names = T)
+
+
+
+## T12 VERTEBRAE ##
+
+# LOOCV WITH REPLICATION
+
+
+set.seed(123)
+runs <- 100
+# system.time({
+#   fishT12 <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk12_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
+
+fishT12 <- map_dfr(fish12,`[`, c("k", "Accuracy", "Kappa"))
+kfishT12 <- fish12 %>% 
+  filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
+  select(k) # select column k
+kfishT12 <- kfishT12[1,] # k with highest accuracy
+
+set.seed(123)
+predicted.classes_T12 <- train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+                              method     = "knn",
+                              tuneGrid   = expand.grid(k = 3),
+                              trControl  = trainControl(method  = "LOOCV"),
+                              metric     = "Accuracy",
+                              data       = Trunk12_sub)$pred # predict class based on KNN model
+mean(predicted.classes_T12$pred == predicted.classes_T12$obs) #overall accuracy
+
+accKNNT12 <- table(predicted.classes_T12$obs,predicted.classes_T12$pred)
+accKNNT12
+# t <- diag(prop.table(accKNNT12, 1))
+# t <-round(t, digits = 2)
+# write.table(t, file = "T12 species KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -227,7 +310,7 @@ accKNNsc
 
 
 
-### RANDOM FOREST CLASSIFICATION ###:Non-parametric______________________________________________________
+### RANDOM FOREST CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 
 # ANTERIOR VERTEBRAE #
@@ -249,7 +332,7 @@ mean(Atlas.rf_ant$predicted == TrunkAnt_sub$species) #overall accuracy
 
 
 
-# AMBYSTOMA CLADE CLASSIFICATION #______________________________________________________
+# AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
 
 TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Trunk8_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
@@ -264,7 +347,7 @@ Sc_sub$clades <- dplyr::recode(Sc_sub$species, A.gracile = "A", A.talpoideum = "
 
 
 
-# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #______________________________________________________
+# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #---------------------------------
 library(tidyverse)
 library(skimr)
 library(knitr)
@@ -293,7 +376,7 @@ create_crfplot <- function(rf, conditional = TRUE){
   return(p)
 }
 
-# CONDITIONAL PERUMATATION IMPORTANCE # *long time to run
+# CONDITIONAL PERUMATATION IMPORTANCE # *long time to run---------------------------------
 
 Atlas.rf_ant_imp <- cforest(
   clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, 
@@ -338,7 +421,7 @@ gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_pos
 
 
 
-### CALCULATE ZYGAPOPHYSEAL RATIOS ###______________________________________________________
+### CALCULATE ZYGAPOPHYSEAL RATIOS ###---------------------------------
 library(tibble)
 zygapophyses <- dplyr::select(PoAtVerts_wofossil, contains("X10"), contains("X11"), contains("X12"),contains("X17"), contains("X18"), contains("X19"), contains("species"), contains("specimen"))
 
@@ -407,7 +490,7 @@ ZyPlot + scale_x_discrete(breaks=c("Zyratioa","Zyratiob","Zyratioc", "Zyratiod",
 
 
 
-### CALCULATE CENTRUM RATIOS ###______________________________________________________
+### CALCULATE CENTRUM RATIOS ###---------------------------------
 
 centrum <- dplyr::select(PoAtVerts_wofossil, contains("X7"), contains("X8"), contains("X9"),contains("X14"), contains("X15"), contains("X16"), contains("species"), contains("specimen"))
 
@@ -474,7 +557,7 @@ CenPlot + scale_x_discrete(breaks=c("Cenratioa","Cenratiob","Cenratioc", "Cenrat
 
 
 
-# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #______________________________________________________
+# T8 POSTERIOR EXTENSION MEASUREMENTS PLOTS #---------------------------------
 
 library(EnvStats)
 T8_extension
@@ -492,7 +575,7 @@ s <- s + facet_wrap(~species, ncol = 5) + stat_n_text()
 s
 
 
-# ## Phylogenetic signal ##______________________________________________________
+# ## Phylogenetic signal ##---------------------------------
 # 
 # # Load in data #
 # require(phytools)
@@ -552,7 +635,8 @@ s
 
 
 
-# MAKE CONSERVATIVE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #______________________________________________________
+
+# MAKE CONSERVATIVE REGIONAL VERTEBRAE GROUPING SUBDATASETS "ANTERIOR, MIDDLE, POSTERIOR" #---------------------------------
 
 #"Anterior"(1,4) comparative verts
 
@@ -588,7 +672,7 @@ TrunkPost.pca <- prcomp(TrunkPost[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
 
 
-# MAKE FOSSIL VERTEBRAE GROUPINGS BASED ON ESTIMATED POSITION IN VERTEBRAL COLUMN #______________________________________________________
+# MAKE FOSSIL VERTEBRAE GROUPINGS BASED ON ESTIMATED POSITION IN VERTEBRAL COLUMN #---------------------------------
 
 Fossilverts <- dplyr::filter(PoAtVerts, grepl('41229*', species)) # fossils only
 row.names(Fossilverts) <- Fossilverts$species
@@ -628,7 +712,7 @@ TrunkFossilSc <- na.omit(TrunkFossilSc) # remove rows with N/A's
 
 
 
-## PRINCIPAL COMPONENT ANALYSES WITH FOSSILS ##______________________________________________________
+## PRINCIPAL COMPONENT ANALYSES WITH FOSSILS ##---------------------------------
 
 # Anterior trunk fossils
 
@@ -746,14 +830,14 @@ gridExtra::grid.arrange(Ant_plot, Mid_plot ,Post_plot,Sc_plot,nrow = 2)
 
 
 
-# Assess sample size per species______________________________________________________
+# Assess sample size per species---------------------------------
 library(tidyverse)
 
 PoAtVerts_wofossil %>%
   dplyr::group_by(species) %>%
   dplyr::summarise(N = n())
 
-# *removed A. subsalsum and A. ordinarium* 
+# *removed A. subsalsum and A. ordinarium* ---------------------------------
 
 #Anterior vertebrae
 
@@ -778,7 +862,7 @@ TrunkSc_sub$species <- droplevels(TrunkSc_sub$species)
 
 
 
-### CONSERVATIVE K NEAREST NEIGHBOR   ###:Non-parametric______________________________________________________
+### CONSERVATIVE K NEAREST NEIGHBOR   ###:Non-parametric---------------------------------
 library(caret)
 
 #make KNN model using LOOCV to find optimal k
@@ -947,7 +1031,7 @@ accKNNant
 
 
 
-## KNN FOSSIL CLASSIFICATIONS ##______________________________________________________
+## KNN FOSSIL CLASSIFICATIONS ##---------------------------------
 library(class)
 
 # ANTERIOR FOSSILS #
@@ -997,7 +1081,7 @@ KnnScPrediction
 
 
 
-### CONSERVATIVE RANDOM FOREST CLASSIFICATION ###:Non-parametric______________________________________________________
+### CONSERVATIVE RANDOM FOREST CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 
 # ANTERIOR VERTEBRAE #
@@ -1085,7 +1169,7 @@ y_pred_sc
 
 
 
-# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###______________________________________________________
+# ### MAHALAHOBIS DISTANCES AND NEIGHBOR JOINING ###---------------------------------
 # library(HDMD)
 # library("ape")
 # library(phytools)
@@ -1149,15 +1233,14 @@ y_pred_sc
 
 
 
-# AMBYSTOMA CLADE CLASSIFICATION #______________________________________________________
-
+# AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
 TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 TrunkMid_sub$clades <- dplyr::recode(TrunkMid_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 TrunkPost_sub$clades <- dplyr::recode(TrunkPost_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 TrunkSc_sub$clades <- dplyr::recode(TrunkSc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 
 
-### K NEAREST NEIGHBOR CLADES ###:Non-parametric______________________________________________________
+### K NEAREST NEIGHBOR CLADES ###:Non-parametric---------------------------------
 library(caret)
 
 #make KNN model using LOOCV to find optimal k
@@ -1331,7 +1414,7 @@ accKNN_ant_clade
 
 
 
-## KNN FOSSIL CLADE CLASSIFICATIONS ##______________________________________________________
+## KNN FOSSIL CLADE CLASSIFICATIONS ##---------------------------------
 library(class)
 
 # ANTERIOR FOSSILS #
@@ -1381,7 +1464,7 @@ KnnSCPrediction
 
 
 
-### RANDOM FOREST CLADE CLASSIFICATION ###:Non-parametric______________________________________________________
+### RANDOM FOREST CLADE CLASSIFICATION ###:Non-parametric---------------------------------
 library(randomForest)
 
 # ANTERIOR VERTEBRAE #
@@ -1480,7 +1563,7 @@ y_pred_sc_clade
 
 
 
-### SEXUAL DIMORPHISM? ###______________________________________________________
+### SEXUAL DIMORPHISM? ###---------------------------------
 
 PoAtVerts_sex <-  Amb_linear_data[c(6:7, 14:48, 53:55)] #select only relevant Post atlantal measurements
 
