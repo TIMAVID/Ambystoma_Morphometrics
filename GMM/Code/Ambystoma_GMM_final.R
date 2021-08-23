@@ -280,7 +280,7 @@ library(ggforce)
 p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
-  scale_color_manual(name = "Species", breaks=levels(GMM_data_noFossil$species),  values=c(speciescolors, "black", "black", "black", "black", "black")) +
+  scale_color_manual(name = "Species", breaks=levels(GMM_data_noFossil$species),  values=c(speciescolors, "#000000", "#000000", "#000000", "#000000", "#000000")) +
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic()
 p
 

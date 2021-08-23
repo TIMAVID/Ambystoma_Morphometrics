@@ -47,12 +47,13 @@ percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), 
 Amb_fossil_PCA <- predict(Atlas.pca, Atlas_fossil_noTub[,1:6])
 Fossil_PC_scores <- as.data.frame(Amb_fossil_PCA)
 Fossil_PC_scores <- cbind(Fossil_PC_scores, species= Atlas_fossil_noTub$species)
+Fossil_PC_scores <- droplevels(Fossil_PC_scores)
 
 All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe with the original PC scores and the PC scores of your fossil
 tail(All_PC_scores)
 
 # PLOT #
-speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616")
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616", "blue", "blue" )
 speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
@@ -60,9 +61,10 @@ library(ggforce)
 p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
-  scale_color_manual(name = "Species", breaks=levels(PC_scores$species), values=c(speciescolors, "black", "black", "black", "black", "black")) + 
-  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic()
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + 
+  scale_color_manual(name = "Species", breaks=levels(PC_scores$species), values=c(speciescolors))
 p
+
 
 
 # TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------

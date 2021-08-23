@@ -186,16 +186,16 @@ registerDoParallel(cores=ncore)
 
 set.seed(123)
 runs <- 100
-# system.time({
-#   fishT1 <- foreach(icount(runs)) %dopar% {
-#     train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
-#           method     = "knn",
-#           tuneGrid   = expand.grid(k = 1:17),
-#           trControl  = trainControl(method  = "LOOCV"),
-#           metric     = "Accuracy",
-#           data       = TrunkAnt_sub)$results
-#   }
-# }) #repeated KNN model using LOOCV to find optimal k
+system.time({
+  fishT1 <- foreach(icount(runs)) %dopar% {
+    train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+          method     = "knn",
+          tuneGrid   = expand.grid(k = 1:17),
+          trControl  = trainControl(method  = "LOOCV"),
+          metric     = "Accuracy",
+          data       = TrunkAnt_sub)$results
+  }
+}) #repeated KNN model using LOOCV to find optimal k
 
 fishT1 <- map_dfr(fishT1,`[`, c("k", "Accuracy", "Kappa"))
 kfishT1 <- fishT1 %>% 
