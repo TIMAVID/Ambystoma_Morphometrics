@@ -188,14 +188,15 @@ set.seed(123)
 runs <- 100
 system.time({
   fishT1 <- foreach(icount(runs)) %dopar% {
-    train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+    caret::train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
           method     = "knn",
           tuneGrid   = expand.grid(k = 1:17),
-          trControl  = trainControl(method  = "LOOCV"),
+          trControl  = caret::trainControl(method  = "LOOCV"),
           metric     = "Accuracy",
           data       = TrunkAnt_sub)$results
   }
 }) #repeated KNN model using LOOCV to find optimal k
+
 
 fishT1 <- map_dfr(fishT1,`[`, c("k", "Accuracy", "Kappa"))
 kfishT1 <- fishT1 %>% 
@@ -230,16 +231,16 @@ accKNNT1
 
 set.seed(123)
 runs <- 100
-# system.time({
-#   fishT8 <- foreach(icount(runs)) %dopar% {
-#     train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
-#           method     = "knn",
-#           tuneGrid   = expand.grid(k = 1:17),
-#           trControl  = trainControl(method  = "LOOCV"),
-#           metric     = "Accuracy",
-#           data       = Trunk8_sub)$results
-#   }
-# }) #repeated KNN model using LOOCV to find optimal k
+system.time({
+  fishT8 <- foreach(icount(runs)) %dopar% {
+    train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+          method     = "knn",
+          tuneGrid   = expand.grid(k = 1:17),
+          trControl  = trainControl(method  = "LOOCV"),
+          metric     = "Accuracy",
+          data       = Trunk8_sub)$results
+  }
+}) #repeated KNN model using LOOCV to find optimal k
 
 fishT8 <- map_dfr(fishT8,`[`, c("k", "Accuracy", "Kappa"))
 kfishT8 <- fishT8 %>% 
@@ -270,19 +271,19 @@ accKNNT8
 
 set.seed(123)
 runs <- 100
-# system.time({
-#   fishT12 <- foreach(icount(runs)) %dopar% {
-#     train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
-#           method     = "knn",
-#           tuneGrid   = expand.grid(k = 1:17),
-#           trControl  = trainControl(method  = "LOOCV"),
-#           metric     = "Accuracy",
-#           data       = Trunk12_sub)$results
-#   }
-# }) #repeated KNN model using LOOCV to find optimal k
+system.time({
+  fishT12 <- foreach(icount(runs)) %dopar% {
+    train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+          method     = "knn",
+          tuneGrid   = expand.grid(k = 1:17),
+          trControl  = trainControl(method  = "LOOCV"),
+          metric     = "Accuracy",
+          data       = Trunk12_sub)$results
+  }
+}) #repeated KNN model using LOOCV to find optimal k
 
-fishT12 <- map_dfr(fish12,`[`, c("k", "Accuracy", "Kappa"))
-kfishT12 <- fish12 %>% 
+fishT12 <- map_dfr(fishT12,`[`, c("k", "Accuracy", "Kappa"))
+kfishT12 <- fishT12 %>% 
   filter(Accuracy == max(Accuracy)) %>% # filter the data.frame to keep row where Accuracy is maximum
   select(k) # select column k
 kfishT12 <- kfishT12[1,] # k with highest accuracy
@@ -352,10 +353,10 @@ mean(Atlas.rf_T12$predicted == Trunk12_sub$species) #overall accuracy
 
 
 # AMBYSTOMA CLADE CLASSIFICATION #---------------------------------
-
+TrunkAnt_sub$clades <- dplyr::recode(TrunkAnt_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 Trunk8_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-Trunk12_sub$clades <- dplyr::recode(Trunk8_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
-
+Trunk12_sub$clades <- dplyr::recode(Trunk12_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
+Sc_sub$clades <- dplyr::recode(Sc_sub$species, A.gracile = "A", A.talpoideum = "A", A.maculatum = "B", A.macrodactylum = "C", A.opacum = "D", A.laterale = "E", A.jeffersonianum = "E", A.mabeei = "F", A.texanum = "F", A.annulatum = "G", A.mavortium = "H", A.tigrinum = "H", A.velasci = "H")
 
 ### K NEAREST NEIGHBOR CLADES ###:Non-parametric---------------------------------
 library(caret)
@@ -367,16 +368,16 @@ library(caret)
 
 set.seed(123)
 runs <- 100
-# system.time({
-#   fishT8clades <- foreach(icount(runs)) %dopar% {
-#     train(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
-#           method     = "knn",
-#           tuneGrid   = expand.grid(k = 1:17),
-#           trControl  = trainControl(method  = "LOOCV"),
-#           metric     = "Accuracy",
-#           data       = Trunk8_sub)$results
-#   }
-# }) #repeated KNN model using LOOCV to find optimal k
+system.time({
+  fishT8clades <- foreach(icount(runs)) %dopar% {
+    train(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+          method     = "knn",
+          tuneGrid   = expand.grid(k = 1:17),
+          trControl  = trainControl(method  = "LOOCV"),
+          metric     = "Accuracy",
+          data       = Trunk8_sub)$results
+  }
+}) #repeated KNN model using LOOCV to find optimal k
 
 fishT8clades <- map_dfr(fishT8clades,`[`, c("k", "Accuracy", "Kappa"))
 kfishT8clades <- fishT8clades %>% 
@@ -407,16 +408,16 @@ accKNNT8clades
 
 set.seed(123)
 runs <- 100
-# system.time({
-#   fishT12clades <- foreach(icount(runs)) %dopar% {
-#     train(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
-#           method     = "knn",
-#           tuneGrid   = expand.grid(k = 1:17),
-#           trControl  = trainControl(method  = "LOOCV"),
-#           metric     = "Accuracy",
-#           data       = Trunk12_sub)$results
-#   }
-# }) #repeated KNN model using LOOCV to find optimal k
+system.time({
+  fishT12clades <- foreach(icount(runs)) %dopar% {
+    train(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+          method     = "knn",
+          tuneGrid   = expand.grid(k = 1:17),
+          trControl  = trainControl(method  = "LOOCV"),
+          metric     = "Accuracy",
+          data       = Trunk12_sub)$results
+  }
+}) #repeated KNN model using LOOCV to find optimal k
 
 fishT12clades <- map_dfr(fishT12clades,`[`, c("k", "Accuracy", "Kappa"))
 kfishT12clades <- fishT12clades %>% 
@@ -517,14 +518,14 @@ Atlas.rf_ant_impplot <- create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
 
 
 Atlas.rf_mid_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=Trunk8_sub,
+  clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c, data=Trunk8_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
 Atlas.rf_mid_impplot <- create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
 
 
 Atlas.rf_post_imp <- cforest(
-  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, data=Trunk12_sub,
+  clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d, data=Trunk12_sub,
   control = cforest_unbiased(mtry = 2, ntree = 500)
 )
 Atlas.rf_post_impplot <- create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
