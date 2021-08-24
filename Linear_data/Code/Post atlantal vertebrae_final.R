@@ -216,9 +216,9 @@ mean(predicted.classes_T1$pred == predicted.classes_T1$obs) #overall accuracy
 
 accKNNT1 <- table(predicted.classes_T1$obs,predicted.classes_T1$pred)
 accKNNT1
-# t <- diag(prop.table(accKNNT1, 1))
-# t <-round(t, digits = 2)
-# write.table(t, file = "T1 species KNNAC", sep = ",", quote = FALSE, row.names = T)
+t <- diag(prop.table(accKNNT1, 1))
+t <-round(t, digits = 2)
+write.table(t, file = "T1 species KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -251,7 +251,7 @@ kfishT8 <- kfishT8[1,] # k with highest accuracy
 set.seed(123)
 predicted.classes_T8 <- train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
                               method     = "knn",
-                              tuneGrid   = expand.grid(k = 3),
+                              tuneGrid   = expand.grid(k = 4),
                               trControl  = trainControl(method  = "LOOCV"),
                               metric     = "Accuracy",
                               data       = Trunk8_sub)$pred # predict class based on KNN model
@@ -291,7 +291,7 @@ kfishT12 <- kfishT12[1,] # k with highest accuracy
 set.seed(123)
 predicted.classes_T12 <- train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
                               method     = "knn",
-                              tuneGrid   = expand.grid(k = 3),
+                              tuneGrid   = expand.grid(k = 4),
                               trControl  = trainControl(method  = "LOOCV"),
                               metric     = "Accuracy",
                               data       = Trunk12_sub)$pred # predict class based on KNN model
@@ -388,7 +388,7 @@ kfishT8clades <- kfishT8clades[1,] # k with highest accuracy
 set.seed(123)
 predicted.classes_T8clades <- train(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
                               method     = "knn",
-                              tuneGrid   = expand.grid(k = 3),
+                              tuneGrid   = expand.grid(k = 6),
                               trControl  = trainControl(method  = "LOOCV"),
                               metric     = "Accuracy",
                               data       = Trunk8_sub)$pred # predict class based on KNN model
@@ -396,9 +396,9 @@ mean(predicted.classes_T8clades$pred == predicted.classes_T8clades$obs) #overall
 
 accKNNT8clades <- table(predicted.classes_T8clades$obs,predicted.classes_T8clades$pred)
 accKNNT8clades
-# t <- diag(prop.table(accKNNT8clades, 1))
-# t <-round(t, digits = 2)
-# write.table(t, file = "T8 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
+t <- diag(prop.table(accKNNT8clades, 1))
+t <-round(t, digits = 2)
+write.table(t, file = "T8 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -428,7 +428,7 @@ kfishT12clades <- kfishT12clades[1,] # k with highest accuracy
 set.seed(123)
 predicted.classes_T12clades <- train(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
                                method     = "knn",
-                               tuneGrid   = expand.grid(k = 3),
+                               tuneGrid   = expand.grid(k = 7),
                                trControl  = trainControl(method  = "LOOCV"),
                                metric     = "Accuracy",
                                data       = Trunk12_sub)$pred # predict class based on KNN model
@@ -436,9 +436,9 @@ mean(predicted.classes_T12clades$pred == predicted.classes_T12clades$obs) #overa
 
 accKNNT12clades <- table(predicted.classes_T12clades$obs,predicted.classes_T12clades$pred)
 accKNNT12clades
-# t <- diag(prop.table(accKNNT12clades, 1))
-# t <-round(t, digits = 2)
-# write.table(t, file = "T12 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
+t <- diag(prop.table(accKNNT12clades, 1))
+t <-round(t, digits = 2)
+write.table(t, file = "T12 clades KNNAC", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -450,12 +450,12 @@ set.seed(123)
 Atlas.rf_T8clades <- randomForest(clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c, data=Trunk8_sub, importance=FALSE)
 print(Atlas.rf_T8clades)
 rf_acc_T8clades <- Atlas.rf_T8clades$confusion
-rf_acc_T8clades <- 1-rf_acc_T8clades[,14] # percent correct classification
+rf_acc_T8clades <- 1-rf_acc_T8clades[,9] # percent correct classification
 rf_acc_T8clades
 
-# t <- rf_acc_T8clades
-# t <-round(t, digits = 2)
-# write.table(t, file = "T8 RFAC clades", sep = ",", quote = FALSE, row.names = T)
+t <- rf_acc_T8clades
+t <-round(t, digits = 2)
+write.table(t, file = "T8 RFAC clades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_T8clades$predicted == Trunk8_sub$clades) #overall accuracy
 
@@ -465,12 +465,12 @@ set.seed(123)
 Atlas.rf_T12clades <- randomForest(clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d, data=Trunk12_sub, importance=FALSE)
 print(Atlas.rf_T12clades)
 rf_acc_T12clades <- Atlas.rf_T12clades$confusion
-rf_acc_T12clades <- 1-rf_acc_T12clades[,14] # percent correct classification
+rf_acc_T12clades <- 1-rf_acc_T12clades[,9] # percent correct classification
 rf_acc_T12clades
 
-# t <- rf_acc_T12clades
-# t <-round(t, digits = 2)
-# write.table(t, file = "T12 RFAC clades", sep = ",", quote = FALSE, row.names = T)
+t <- rf_acc_T12clades
+t <-round(t, digits = 2)
+write.table(t, file = "T12 RFAC clades", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_T12clades$predicted == Trunk12_sub$clades) #overall accuracy
 
