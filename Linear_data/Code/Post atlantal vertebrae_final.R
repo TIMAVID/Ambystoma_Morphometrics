@@ -543,12 +543,39 @@ par(oma=c(0,0,2,0))
 gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_post_impplot, Atlas.rf_sc_impplot,nrow = 2)
 
 
+#With important VH variable removed
+
+library(randomForest)
+# T8 #
+set.seed(123)
+Atlas.rf_T8clades <- randomForest(clades ~ X7c + X8c + X9c + X10c + X11c + X12c, data=Trunk8_sub, importance=FALSE)
+print(Atlas.rf_T8clades)
+rf_acc_T8clades <- Atlas.rf_T8clades$confusion
+rf_acc_T8clades <- 1-rf_acc_T8clades[,9] # percent correct classification
+rf_acc_T8clades
+
+mean(Atlas.rf_T8clades$predicted == Trunk8_sub$clades) #overall accuracy
+
+# T12 #
+set.seed(123)
+Atlas.rf_T12clades <- randomForest(clades ~ X7d + X8d + X9d + X10d + X11d + X12d, data=Trunk12_sub, importance=FALSE)
+print(Atlas.rf_T12clades)
+rf_acc_T12clades <- Atlas.rf_T12clades$confusion
+rf_acc_T12clades <- 1-rf_acc_T12clades[,9] # percent correct classification
+rf_acc_T12clades
+
+mean(Atlas.rf_T12clades$predicted == Trunk12_sub$clades) #overall accuracy
 
 
+# Sacral vertebra #
+set.seed(123)
+Atlas.rf_sc_clade <- randomForest(clades ~ X14 + X15 + X16 + X17 + X18 + X19, data=Sc_sub, importance=FALSE)
+print(Atlas.rf_sc_clade)
+rf_acc_sc_clade <- Atlas.rf_sc_clade$confusion
+rf_acc_sc_clade <- 1-rf_acc_sc_clade[,9] # percent correct classification
+rf_acc_sc_clade
 
-
-
-
+mean(Atlas.rf_sc_clade$predicted == Sc_sub$clades) #overall accuracy
 
 
 
