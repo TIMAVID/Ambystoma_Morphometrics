@@ -255,6 +255,13 @@ GMM_data_fossil <-geomorph.data.frame(coords=GMM_data_fossil$land,
 
 ## PRINCIPAL COMPONENT ANALYSIS ##---------------------------------
 
+
+Amb_PCA2 <- gm.prcomp(GMM_data_noFossil$coords)
+scallinks <- matrix(c(1,rep(2:8, each=2),1), nrow=8, byrow=TRUE) #link landmarks
+plotRefToTarget(Amb_PCA2$shapes$shapes.comp1$min, Amb_PCA2$shapes$shapes.comp1$max, method = "points", mag = 1, links = scallinks) #shapes corresponding to PC1 min and max; grey=min 
+plotRefToTarget(Amb_PCA2$shapes$shapes.comp2$min, Amb_PCA2$shapes$shapes.comp2$max, method = "points", mag = 1, links = scallinks) #shapes corresponding to PC2 min and max; grey=min
+
+
 GMM_data_noFossil$coords <- two.d.array(GMM_data_noFossil$coords) #get the data in XY format for PCA
 Amb_fossil_coords <- two.d.array(GMM_data_fossil$coords) #get the data in XY format for PCA
 

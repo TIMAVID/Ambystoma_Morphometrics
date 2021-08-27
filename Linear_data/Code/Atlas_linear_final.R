@@ -65,6 +65,12 @@ p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) +
   scale_color_manual(name = "Species", breaks=levels(PC_scores$species), values=c(speciescolors))
 p
 
+library(factoextra)
+fviz_pca_var(Atlas.pca,
+             #col.var = "contrib", # Color by contributions to the PC
+             #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
 
 
 # TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------

@@ -78,6 +78,12 @@ T1_4_plot<-ggplot(T1_4.scores,aes(x=PC1,y=PC2,color=species)) +
   theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none")
 T1_4_plot
 
+library(factoextra)
+T1_4_var_cont<-fviz_pca_var(T1_4.pca,
+             #col.var = "contrib", # Color by contributions to the PC
+             #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
 
 
 # T8 "Middle trunk vertebrae #
@@ -98,7 +104,11 @@ T8_plot<-ggplot(T8.scores,aes(x=PC1,y=PC2,color=species)) +
   theme_classic() + ggtitle("T8") + theme(legend.position = "none")
 T8_plot
 
-
+T8_var_cont<-fviz_pca_var(T8.pca,
+                            #col.var = "contrib", # Color by contributions to the PC
+                            #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                            repel = TRUE     # Avoid text overlapping
+)
 # T12 "Posterior trunk vertebrae #
 T12.pca <- prcomp(T12[c(1:7)], center = TRUE, scale = FALSE) # PCA
 
@@ -117,6 +127,11 @@ T12_plot<-ggplot(T12.scores,aes(x=PC1,y=PC2,color=species)) +
   theme_classic() + ggtitle("T12") + theme(legend.position = "none")
 T12_plot
 
+T12_var_cont<-fviz_pca_var(T12.pca,
+                          #col.var = "contrib", # Color by contributions to the PC
+                          #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                          repel = TRUE     # Avoid text overlapping
+)
 
 # SC Sacral vertebrae #
 Sc.pca <- prcomp(Sc[c(1:7)], center = TRUE, scale = FALSE) # PCA
@@ -136,11 +151,17 @@ SC_plot<-ggplot(SC.scores,aes(x=PC1,y=PC2,color=species)) +
   theme_classic() + ggtitle("SC") + theme(legend.position = "none")
 SC_plot
 
+Sc_var_cont<-fviz_pca_var(Sc.pca,
+                           #col.var = "contrib", # Color by contributions to the PC
+                           #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                           repel = TRUE     # Avoid text overlapping
+)
 
 # PLOT ALL TOGETHER #
 par(oma=c(0,0,2,0))
 gridExtra::grid.arrange(T1_4_plot, T8_plot ,T12_plot,SC_plot,nrow = 2)
 
+gridExtra::grid.arrange(T1_4_var_cont, T8_var_cont ,T12_var_cont,Sc_var_cont,nrow = 2)
 
 
 
