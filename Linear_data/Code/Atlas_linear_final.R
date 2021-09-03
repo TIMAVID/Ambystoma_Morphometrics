@@ -12,6 +12,19 @@ library(dplyr)
 
 Atlas <-  Amb_linear_data[c(3, 8:13, 54:55)] #select only relevant atlas measurements
 
+# tub_interglen_extension = ventral extent of the atlantal cotyles below the tuberculum interglenoideum
+# 1 = mid-ventral length of the atlas
+# 2 = width between the atlantal cotyles
+# 3 = height of the atlantal cotyle
+# 4 = width between the postzygapophyses
+# 5 = height from the mid-posteroventral margin of the centrum to the dorsal apex of the neural arch
+# 6 = width at the posterior end of the centrum
+
+
+
+
+
+
 # REMOVE FOSSILS AND TUBERCULUM INTERGLENOIDEUM MEASUREMENT #---------------------------------
 Atlas_wofossil <- dplyr::filter(Atlas, !grepl('41229*', species)) # remove fossils
 row.names(Atlas_wofossil) <- Atlas_wofossil$specimen_num

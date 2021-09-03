@@ -12,6 +12,31 @@ library(dplyr)
 
 PoAtVerts <-  Amb_linear_data[c(6:7, 14:48, 54:55)] #select only relevant Post atlantal measurements
 
+# Trunk vertebrae
+# Cen_to_NeuAR = posterior extent of the neural spine from the posterior margin of the centrum
+# Cen_to_PoZy = posterior extent of the postzygapophysis from the posterior margin of the centrum
+# 7= centrum length
+# 8= width of at the anterior end of the centrum
+# 9= width at the posterior end of the centrum
+# 10= width between the prezygapophyses
+# 11= width between the postzygapophyses
+# 12= length from the prezygapophysis to the postzygapophysis
+# 13= height from the mid-posteroventral margin of the centrum to the dorsal apex of the neural arch
+# *a corresponds to 1st trunk vertebra, b corresponds to 4th trunk vertebra, c corresponds to 8th trunk vertebra, d corresponds to 12th trunk vertebra
+
+# Sacral vertebrae
+# 14= centrum length
+# 15= width of at the anterior end of the centrum
+# 16= width at the posterior end of the centrum
+# 17= width between the prezygapophyses
+# 18= width between the postzygapophyses
+# 19= length from the prezygapophysis to the postzygapophysis
+# 20= height from the mid-posteroventral margin of the centrum to the dorsal apex of the neural arch
+
+
+
+
+
 # REMOVE FOSSILS #
 PoAtVerts_wofossil <- dplyr::filter(PoAtVerts, !grepl('41229*', species)) # remove fossils
 row.names(PoAtVerts_wofossil) <- PoAtVerts_wofossil$specimen_num
