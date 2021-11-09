@@ -10,7 +10,7 @@ head(Amb_linear_data)
 # Tidy data #
 library(dplyr)
 
-Atlas <-  Amb_linear_data[c(3, 8:13, 54:55)] #select only relevant atlas measurements
+Atlas <-  Amb_linear_data[c(2,3, 8:13, 54:55)] #select only relevant atlas measurements
 
 # tub_interglen_extension = ventral extent of the atlantal cotyles below the tuberculum interglenoideum
 # 1 = mid-ventral length of the atlas
@@ -32,7 +32,7 @@ Atlas_wofossil$species <- factor(Atlas_wofossil$species, levels =
                                          c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
                                            "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.ordinarium", "A.subsalsum", "A.velasci")) # Reorder species levels
 
-Atlas_wofossil_noTub <- subset(Atlas_wofossil, select=-c(tub_interglen_extension)) # no tuberculum interglenoideum extension measurement
+Atlas_wofossil_noTub <- subset(Atlas_wofossil, select=-c(tub_interglen_extension, Cotyle_height)) # no tuberculum interglenoideum extension measurement
 Atlas_wofossil_noTub <- na.omit(Atlas_wofossil_noTub) # remove rows with N/A's
 Atlas_wofossil_noTub <- subset(Atlas_wofossil_noTub, select=-c(specimen_num))
 
@@ -42,7 +42,7 @@ Atlas_wofossil_noTub <- subset(Atlas_wofossil_noTub, select=-c(specimen_num))
 Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
 Atlas_fossil <- na.omit(Atlas_fossil) # remove rows with N/A's
 row.names(Atlas_fossil) <- Atlas_fossil$species
-Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, specimen_num))
+Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, specimen_num, Cotyle_height))
 
 
 
@@ -89,13 +89,17 @@ fviz_pca_var(Atlas.pca,
 # TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------
 
 library(EnvStats)
-Tub_dat <- Atlas_wofossil[c(1,9)]
+Tub_dat <- Atlas_wofossil[c(1:2,10)]
 Tub_dat <- na.omit(Tub_dat) # remove rows with N/A's
 
-ventral_extension_p <- ggplot(data = Tub_dat, aes(x = species, y = (tub_interglen_extension)))
+
+Tub_dat<-dplyr::mutate(Tub_dat ,ratio = tub_interglen_extension/Cotyle_height, .before = species) #add new column for ratio
+
+
+ventral_extension_p <- ggplot(data = Tub_dat, aes(x = species, y = (ratio)))
 ventral_extension_p <- ventral_extension_p + geom_boxplot(na.rm = TRUE)
 ventral_extension_p <- ventral_extension_p + theme(axis.text.x = element_text(angle = 90))
-ventral_extension_p <- ventral_extension_p + ylab("ventral extension (mm)") + stat_n_text() +theme_classic()
+ventral_extension_p <- ventral_extension_p + ylab("TbVE / CotH") + stat_n_text() +theme_classic()
 ventral_extension_p
 
 
