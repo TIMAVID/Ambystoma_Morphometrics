@@ -10,7 +10,7 @@ head(Amb_linear_data)
 # Tidy data #
 library(dplyr)
 
-Atlas <-  Amb_linear_data[c(2,3, 8:13, 54:55)] #select only relevant atlas measurements
+Atlas <-  Amb_linear_data[c(2,3, 8:13,50, 54:55)] #select only relevant atlas measurements
 
 # tub_interglen_extension = ventral extent of the atlantal cotyles below the tuberculum interglenoideum
 # 1 = mid-ventral length of the atlas
@@ -37,12 +37,35 @@ Atlas_wofossil_noTub <- na.omit(Atlas_wofossil_noTub) # remove rows with N/A's
 Atlas_wofossil_noTub <- subset(Atlas_wofossil_noTub, select=-c(specimen_num))
 
 
+# REMOVE EFFECT OF SIZE ##---------------------------------
+
+library(tidyverse)
+
+geometric_mean <- function(x){
+  exp(sum(log(x), na.rm = TRUE) / length(x))
+}
+
+Shape.varb.calc <- function(x){
+  log(x / geometric_mean(x))
+}
+
+t(apply(Atlas_wofossil_noTub[,1:6], 1, Shape.varb.calc))
+
+
+
+
 ## SUBSET DATA FOR FOSSILS ONLY ##---------------------------------
 
 Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
 Atlas_fossil <- na.omit(Atlas_fossil) # remove rows with N/A's
 row.names(Atlas_fossil) <- Atlas_fossil$species
 Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, specimen_num, Cotyle_height))
+
+
+# REMOVE EFFECT OF SIZE ##---------------------------------
+
+
+
 
 
 
