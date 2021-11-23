@@ -62,12 +62,6 @@ row.names(Atlas_fossil) <- Atlas_fossil$species
 Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, specimen_num, Cotyle_height))
 
 
-# REMOVE EFFECT OF SIZE ##---------------------------------
-
-
-
-
-
 
 
 ## PRINCIPAL COMPONENT ANALYSIS ##---------------------------------
