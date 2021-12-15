@@ -322,7 +322,7 @@ plot(Amb_anova_size, type = "diagnostics", outliers = TRUE)
 #Post-hoc pairwise comparisons on ANOVA with Csize
 
 gp <-  interaction(GMM_data_sub$species)
-PW <- pairwise(Amb_anova_size, groups = gp, covariate = NULL)
+PW <- pairwise(Amb_anova_size, groups = gp, covariate = log(size))
 summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
 
 # t<- summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)

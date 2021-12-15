@@ -37,29 +37,14 @@ Atlas_wofossil_noTub <- na.omit(Atlas_wofossil_noTub) # remove rows with N/A's
 Atlas_wofossil_noTub <- subset(Atlas_wofossil_noTub, select=-c(specimen_num))
 
 
-# REMOVE EFFECT OF SIZE ##---------------------------------
-
-library(tidyverse)
-
-geometric_mean <- function(x){
-  exp(sum(log(x), na.rm = TRUE) / length(x))
-}
-
-Shape.varb.calc <- function(x){
-  log(x / geometric_mean(x))
-}
-
-t(apply(Atlas_wofossil_noTub[,1:6], 1, Shape.varb.calc))
-
-
-
 
 ## SUBSET DATA FOR FOSSILS ONLY ##---------------------------------
 
 Atlas_fossil <- dplyr::filter(Atlas, grepl('41229*', species)) # fossils
+Atlas_fossil <- subset(Atlas_fossil, select=-c(SVL_P, specimen_num)) # no tuberculum interglenoideum extension measurement
 Atlas_fossil <- na.omit(Atlas_fossil) # remove rows with N/A's
 row.names(Atlas_fossil) <- Atlas_fossil$species
-Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, specimen_num, Cotyle_height))
+Atlas_fossil_noTub <- subset(Atlas_fossil, select=-c(tub_interglen_extension, Cotyle_height))
 
 
 
@@ -83,7 +68,7 @@ All_PC_scores <- rbind(PC_scores, Fossil_PC_scores) # create a new dataframe wit
 tail(All_PC_scores)
 
 # PLOT #
-speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616", "blue", "blue" )
+speciescolors <- c("#666600", "#C9D42D" ,"#42CEBC" ,"#F2AB1F" ,"#864ED0" ,"#261ACE", "#086AFD", "#08FD6A", "#0C8B3F", "#E50CF5", "#FF5E00","#FF0000", "#FF6A6A", "#D5930F", "#9E1616", "#000000", "#000000" )
 speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
@@ -92,7 +77,7 @@ p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) +
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + 
-  scale_color_manual(name = "Species", breaks=levels(PC_scores$species), values=c(speciescolors))
+  scale_color_manual(name = "Species", breaks=levels(All_PC_scores$species), values=c(speciescolors))
 p
 
 library(factoextra)
@@ -106,7 +91,7 @@ fviz_pca_var(Atlas.pca,
 # TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------
 
 library(EnvStats)
-Tub_dat <- Atlas_wofossil[c(1:2,10)]
+Tub_dat <- Atlas_wofossil[c(1:2,11)]
 Tub_dat <- na.omit(Tub_dat) # remove rows with N/A's
 
 
@@ -137,9 +122,27 @@ Atlas_wofossil_noTub_sub %>%
 ## PERMUTATION MANOVA ##---------------------------------
 library(RVAideMemoire)
 require(vegan)
+library(RRPP)
 
 #Permutational Multivariate Analysis of Variance Using Euclidean Distance Matrices
-system.time(adonis(Atlas_wofossil_noTub_sub[,1:6]~species,data=Atlas_wofossil_noTub_sub,method="euclidean", parallel = 8)) 
+(adonis(Atlas_wofossil_noTub_sub[,1:6]~log(SVL_P) + species,data=Atlas_wofossil_noTub_sub,method="euclidean", parallel = 8)) 
+
+fit <- lm.rrpp(as.matrix(Atlas_wofossil_noTub_sub[,1:6]) ~ log(SVL_P)+species, SS.type = c("III"), data = Atlas_wofossil_noTub_sub)
+anova(fit)
+
+plot(fit, type = "PC", pch = 19, col = Atlas_wofossil_noTub_sub$species) # with added par arguments
+legend("bottom", legend=levels(Atlas_wofossil_noTub_sub$species), pch=16, col=unique(Atlas_wofossil_noTub_sub$species))
+
+plot(fit)
+
+plot(fit, type = "regression", reg.type = "PredLine", 
+     predictor = log(Atlas_wofossil_noTub_sub$SVL_P), pch=19,
+     col = as.numeric(Atlas_wofossil_noTub_sub$species))
+
+#pairwise comparisons between group
+PWT <- pairwise(fit, covariate = log(Atlas_wofossil_noTub_sub$SVL_P), groups = interaction(Atlas_wofossil_noTub_sub$species))
+summary(PWT, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+?pairwise
 
 #pairwise comparisons between group levels with corrections for multiple testing
 set.seed(123)
