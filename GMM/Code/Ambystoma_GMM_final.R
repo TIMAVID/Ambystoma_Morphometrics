@@ -328,7 +328,7 @@ summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
 # t<- summary(PW, test.type = "dist", confidence = 0.95, stat.table = FALSE)
 # t <- t$pairwise.tables$P
 # t <- round(t, 3)
-# write.table(t, file = "GMMPW.txt", sep = ",", quote = FALSE, row.names = T)
+# write.table(t, file = "size correct GMMPW.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 

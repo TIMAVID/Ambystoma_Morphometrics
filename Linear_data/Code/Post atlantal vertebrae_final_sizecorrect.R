@@ -67,9 +67,9 @@ Sc <- dplyr::select(PoAtVerts_wofossil, num_range("X", 14:20),contains("SVL_P"),
 
 # EFFECT OF SIZE ##---------------------------------
 
-Gms<- apply(T1[,1:7], 1, function(x) exp(mean(log(x))))
+Gms<- apply(T8[,1:7], 1, function(x) (mean(log(x))))
 
-total <- data.frame(SVL_p=T1$SVL_P, Gms, species=T1$species)
+total <- data.frame(SVL_p=T8$SVL_P, Gms, species=T8$species)
 
 fit1 <- lm(Gms ~ log(SVL_p), data = total)
 summary(fit1)
@@ -88,7 +88,7 @@ plot.alom.species<-function(variables,data){
   require(gridExtra)
   figs<-lapply(variables, function(x) {
     ggplot(data = data,
-           aes(log(SVL_P), log(get(x)))) + geom_point(aes(color=species))+
+           aes(log(SVL_P), log(get(x)),color=species)) + geom_point()+
       scale_colour_manual(values=speciescolors)+ggtitle(x)+
       theme_classic(base_size = 8)+ ylab("log(Measurement)")+
       geom_smooth(method='lm')+theme(legend.position="none")+ coord_fixed(ratio = 1)+
@@ -114,9 +114,9 @@ plot.alom.species<-function(variables,data){
   out <- as.data.frame(out)
   return(out)
 }
-varlist <- names(T4)[1:7] #all the different measurements
+varlist <- names(T8)[1:7] #all the different measurements
 
-Amby_atlas_alom <-plot.alom.species(varlist,T4) #liner models of all measurements
+Amby_atlas_alom <-plot.alom.species(varlist,T8) #liner models of all measurements
 
 
 # REMOVE EFFECT OF "SIZE" ##---------------------------------
@@ -138,8 +138,8 @@ T12 <- data.frame(as.data.frame(t(apply(T12[,1:7], 1, Shape.varb.calc))), specie
 Sc <- data.frame(as.data.frame(t(apply(Sc[,1:7], 1, Shape.varb.calc))), species = Sc$species)
 
 
-ggplot(total, aes(Gms, (T1[,2]), color=species)) + 
-  geom_point() +  stat_smooth(method = "lm", col = "red") + theme_bw()+
+ggplot(total, aes(Gms, log(T8[,7]), color=species)) + 
+  geom_point()+  stat_smooth(method = "lm", col = "red") + theme_bw()+
   scale_color_manual(name = "Species", breaks=levels(total$species), values=c(speciescolors))
 
 
@@ -172,13 +172,13 @@ T1_4.scores <- data.frame(T1_4.pca$x, species = TrunkAnt$species)
 T1_4loadings <- data.frame(Variables = rownames(T1_4.pca$rotation), T1_4.pca$rotation)# Extract loadings of the variables
 
 T1_4_plot<-ggplot(T1_4.scores,aes(x=PC1,y=PC2,color=species)) + 
-  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
-  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
-  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
-  #                                       label = T1loadings$Variables) +
+   geom_segment(data = T1_4loadings, aes(x = 0, y = 0, xend = (PC1),
+                                        yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+                color = "black") +annotate("text", x = (T1_4loadings$PC1), y = (T1_4loadings$PC2),
+                                         label = T1_4loadings$Variables,hjust = 1) +
   geom_point(size =2)+ xlab(percentage_T1_4[1]) + ylab(percentage_T1_4[2]) +
   scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none") +coord_fixed()
 T1_4_plot
 
 library(factoextra)
@@ -198,13 +198,13 @@ T8.scores <- data.frame(T8.pca$x, species = T8$species)
 T8loadings <- data.frame(Variables = rownames(T8.pca$rotation), T8.pca$rotation)# Extract loadings of the variables
 
 T8_plot<-ggplot(T8.scores,aes(x=PC1,y=PC2,color=species)) + 
-  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
-  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
-  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
-  #                                       label = T1loadings$Variables) +
+   geom_segment(data = T8loadings, aes(x = 0, y = 0, xend = (PC1),
+                                        yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+                color = "black") +annotate("text", x = (T8loadings$PC1), y = (T8loadings$PC2),
+                                         label = T8loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T8[1]) + ylab(percentage_T8[2]) +
   scale_color_manual(name = "Species", breaks=levels(T8$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T8") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T8") + theme(legend.position = "none")+coord_fixed()
 T8_plot
 
 T8_var_cont<-fviz_pca_var(T8.pca,
@@ -221,13 +221,13 @@ T12.scores <- data.frame(T12.pca$x, species = T8$species)
 T12loadings <- data.frame(Variables = rownames(T12.pca$rotation), T12.pca$rotation)# Extract loadings of the variables
 
 T12_plot<-ggplot(T12.scores,aes(x=PC1,y=PC2,color=species)) + 
-  # geom_segment(data = T1loadings, aes(x = 0, y = 0, xend = (PC1),
-  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
-  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
-  #                                       label = T1loadings$Variables) +
+   geom_segment(data = T12loadings, aes(x = 0, y = 0, xend = (PC1),
+                                        yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+                color = "black") +annotate("text", x = (T12loadings$PC1), y = (T12loadings$PC2),
+                                         label = T12loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T12[1]) + ylab(percentage_T12[2]) +
   scale_color_manual(name = "Species", breaks=levels(T12$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T12") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T12") + theme(legend.position = "none")+coord_fixed()
 T12_plot
 
 T12_var_cont<-fviz_pca_var(T12.pca,
@@ -245,19 +245,19 @@ SC.scores <- data.frame(Sc.pca$x, species = Sc$species)
 SCloadings <- data.frame(Variables = rownames(Sc.pca$rotation), Sc.pca$rotation)# Extract loadings of the variables
 
 SC_plot<-ggplot(SC.scores,aes(x=PC1,y=PC2,color=species)) + 
-  # geom_segment(data = SCloadings, aes(x = 0, y = 0, xend = (PC1),
-  #                                      yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
-  #              color = "black") +annotate("text", x = (T1loadings$PC1), y = (T1loadings$PC2),
-  #                                       label = T1loadings$Variables) +
+   geom_segment(data = SCloadings, aes(x = 0, y = 0, xend = (PC1),
+                                        yend = (PC2)), arrow = arrow(length = unit(1/2, "picas")),
+                color = "black") +annotate("text", x = (SCloadings$PC1), y = (SCloadings$PC2),
+                                         label = SCloadings$Variables) +
   geom_point(size =2)+ xlab(percentage_SC[1]) + ylab(percentage_SC[2]) +
   scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("SC") + theme(legend.position = "none")
+  theme_classic() + ggtitle("SC") + theme(legend.position = "none")+coord_fixed()
 SC_plot
 
-Sc_var_cont<-fviz_pca_var(Sc.pca,
+Sc_var_cont<-fviz_pca_biplot(Sc.pca,
                           #col.var = "contrib", # Color by contributions to the PC
                           #gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-                          repel = TRUE     # Avoid text overlapping
+                          col.ind = Sc$species,label = "var", palette = speciescolors,  repel = TRUE     # Avoid text overlapping
 )
 
 # PLOT ALL TOGETHER #
@@ -265,7 +265,6 @@ par(oma=c(0,0,2,0))
 gridExtra::grid.arrange(T1_4_plot, T8_plot ,T12_plot,SC_plot,nrow = 2)
 
 gridExtra::grid.arrange(T1_4_var_cont, T8_var_cont ,T12_var_cont,Sc_var_cont,nrow = 2)
-
 
 
 # *removed A. subsalsum and A. ordinarium* #---------------------------------
@@ -310,16 +309,16 @@ registerDoParallel(cores=ncore)
 
 set.seed(123)
 runs <- 100
-system.time({
-  fishT1 <- foreach(icount(runs)) %dopar% {
-    caret::train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
-                 method     = "knn",
-                 tuneGrid   = expand.grid(k = 1:17),
-                 trControl  = caret::trainControl(method  = "LOOCV"),
-                 metric     = "Accuracy",
-                 data       = TrunkAnt_sub)$results
-  }
-}) #repeated KNN model using LOOCV to find optimal k
+# system.time({
+#   fishT1 <- foreach(icount(runs)) %dopar% {
+#     caret::train(species ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a,
+#                  method     = "knn",
+#                  tuneGrid   = expand.grid(k = 1:17),
+#                  trControl  = caret::trainControl(method  = "LOOCV"),
+#                  metric     = "Accuracy",
+#                  data       = TrunkAnt_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
 
 
 fishT1 <- map_dfr(fishT1,`[`, c("k", "Accuracy", "Kappa"))
@@ -355,16 +354,16 @@ write.table(t, file = "size corrected T1 species KNNAC", sep = ",", quote = FALS
 
 set.seed(123)
 runs <- 100
-system.time({
-  fishT8 <- foreach(icount(runs)) %dopar% {
-    train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
-          method     = "knn",
-          tuneGrid   = expand.grid(k = 1:17),
-          trControl  = trainControl(method  = "LOOCV"),
-          metric     = "Accuracy",
-          data       = Trunk8_sub)$results
-  }
-}) #repeated KNN model using LOOCV to find optimal k
+# system.time({
+#   fishT8 <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk8_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
 
 fishT8 <- map_dfr(fishT8,`[`, c("k", "Accuracy", "Kappa"))
 kfishT8 <- fishT8 %>% 
@@ -395,16 +394,16 @@ write.table(t, file = "size corrected T8 species KNNAC", sep = ",", quote = FALS
 
 set.seed(123)
 runs <- 100
-system.time({
-  fishT12 <- foreach(icount(runs)) %dopar% {
-    train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
-          method     = "knn",
-          tuneGrid   = expand.grid(k = 1:17),
-          trControl  = trainControl(method  = "LOOCV"),
-          metric     = "Accuracy",
-          data       = Trunk12_sub)$results
-  }
-}) #repeated KNN model using LOOCV to find optimal k
+# system.time({
+#   fishT12 <- foreach(icount(runs)) %dopar% {
+#     train(species ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Trunk12_sub)$results
+#   }
+# }) #repeated KNN model using LOOCV to find optimal k
 
 fishT12 <- map_dfr(fishT12,`[`, c("k", "Accuracy", "Kappa"))
 kfishT12 <- fishT12 %>% 
@@ -690,16 +689,16 @@ TrunkFossilSc <- data.frame(as.data.frame(t(apply(TrunkFossilSc[,1:7], 1, Shape.
 TrunkFossilAnt_PCA <- predict(TrunkAnt.pca, TrunkFossilAnt[,1:7])
 TrunkFossilAnt_PC_scores <- as.data.frame(TrunkFossilAnt_PCA)
 
-FossilAnt_PC_scores <-data.frame(TrunkFossilAnt_PCA, species = TrunkFossilAnt$species)
+FossilAnt_PC_scores <-data.frame(TrunkFossilAnt_PCA, species = TrunkFossilAnt$species, position = "Anterior")
 
-Antscores <-data.frame(TrunkAnt.pca$x, species = TrunkAnt$species)
+Antscores <-data.frame(TrunkAnt.pca$x, species = TrunkAnt$species, position = TrunkAnt$Vert)
 
 All_AntPC_scores <- (rbind(Antscores, FossilAnt_PC_scores)) # create a new dataframe with the original PC scores and the PC scores of the fossils
 
 # PLOT #
 
 fossilcolors <- grDevices::gray.colors(54, start = 0, end = 0)
-speciesshapes <- c(rep(16,15), rep(18,50))
+speciesshapes <- c(15, 17, 18)
 
 library(ggplot2)
 library(ggforce)
@@ -707,11 +706,11 @@ library(ggforce)
 percentage_ant <- round(TrunkAnt.pca$sdev^2 / sum(TrunkAnt.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_ant <- paste( colnames(Antscores), "(", paste( as.character(percentage_ant), "%", ")", sep="") )
 
-Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = position)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =2)+ xlab(percentage_ant[1]) + ylab(percentage_ant[2]) +
   scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors, fossilcolors)) + 
-  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Anterior Vertebrae") + theme(legend.position = "none")
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Anterior Vertebrae") #+ theme(legend.position = "none")
 Ant_plot
 
 
@@ -1473,3 +1472,71 @@ mean(Atlas.rf_sc_clade$predicted == TrunkSc_sub$clades) #overall accuracy
 y_pred_sc_clade = predict(Atlas.rf_sc_clade, newdata = TrunkFossilSc[,1:7],type="response")
 y_pred_sc_clade
 write.table(y_pred_sc_clade, file = "size corrected sc clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
+
+
+
+
+# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #---------------------------------
+library(tidyverse)
+library(skimr)
+library(knitr)
+library(party)
+library(GGally)
+
+
+
+
+create_crfplot <- function(rf, conditional = TRUE){
+  
+  imp <- rf %>%
+    varimp(conditional = conditional) %>% 
+    as_tibble() %>% 
+    rownames_to_column("Feature") %>% 
+    rename(Importance = value)
+  
+  p <- ggplot(imp, aes(x = reorder(Feature, Importance), y = Importance)) +
+    geom_bar(stat = "identity", fill = "#53cfff", width = 0.65) +
+    coord_flip() + 
+    theme_light(base_size = 20) +
+    theme(axis.title.x = element_text(size = 15, color = "black"),
+          axis.title.y = element_blank(),
+          axis.text.x  = element_text(size = 15, color = "black"),
+          axis.text.y  = element_text(size = 15, color = "black"))  + theme_classic()
+  return(p)
+}
+
+# CONDITIONAL PERUMATATION IMPORTANCE # *long time to run---------------------------------
+
+Atlas.rf_ant_imp <- cforest(
+  clades ~ X1a + X2a + X3a + X4a + X5a + X6a + X7a, 
+  data=TrunkAnt_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_ant_impplot <- create_crfplot(Atlas.rf_ant_imp, conditional = TRUE)
+
+
+Atlas.rf_mid_imp <- cforest(
+  clades ~ X7c + X8c + X9c + X10c + X11c + X12c + X13c, data=Trunk8_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_mid_impplot <- create_crfplot(Atlas.rf_mid_imp, conditional = TRUE)
+
+
+Atlas.rf_post_imp <- cforest(
+  clades ~ X7d + X8d + X9d + X10d + X11d + X12d + X13d, data=Trunk12_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_post_impplot <- create_crfplot(Atlas.rf_post_imp, conditional = TRUE)
+
+
+Atlas.rf_sc_imp <- cforest(
+  clades ~ X14 + X15 + X16 + X17 + X18 + X19 + X20, data=Sc_sub,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+Atlas.rf_sc_impplot <- create_crfplot(Atlas.rf_sc_imp, conditional = TRUE)
+
+
+# PLOT ALL TOGETHER #
+par(oma=c(0,0,2,0))
+gridExtra::grid.arrange(Atlas.rf_ant_impplot, Atlas.rf_mid_impplot, Atlas.rf_post_impplot, Atlas.rf_sc_impplot,nrow = 2)
+

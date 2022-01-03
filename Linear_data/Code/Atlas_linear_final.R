@@ -91,17 +91,16 @@ fviz_pca_var(Atlas.pca,
 # TUBERCULUM INTERGLENOIDEUM PLOT #---------------------------------
 
 library(EnvStats)
-Tub_dat <- Atlas_wofossil[c(1:2,11)]
+Tub_dat <- Atlas_wofossil[c(1:2,9,11)]
 Tub_dat <- na.omit(Tub_dat) # remove rows with N/A's
 
 
 Tub_dat<-dplyr::mutate(Tub_dat ,ratio = tub_interglen_extension/Cotyle_height, .before = species) #add new column for ratio
 
 
-ventral_extension_p <- ggplot(data = Tub_dat, aes(x = species, y = (ratio)))
+ventral_extension_p <- ggplot(data = Tub_dat, aes(x = species, y = (tub_interglen_extension)))
 ventral_extension_p <- ventral_extension_p + geom_boxplot(na.rm = TRUE)
-ventral_extension_p <- ventral_extension_p + theme(axis.text.x = element_text(angle = 90))
-ventral_extension_p <- ventral_extension_p + ylab("TbVE / CotH") + stat_n_text() +theme_classic()
+ventral_extension_p <- ventral_extension_p + ylab("TbVE(mm)") + stat_n_text() +theme_classic()+ theme(axis.text.x = element_text(angle = 90))
 ventral_extension_p
 
 
@@ -124,10 +123,8 @@ library(RVAideMemoire)
 require(vegan)
 library(RRPP)
 
-#Permutational Multivariate Analysis of Variance Using Euclidean Distance Matrices
-(adonis(Atlas_wofossil_noTub_sub[,1:6]~log(SVL_P) + species,data=Atlas_wofossil_noTub_sub,method="euclidean", parallel = 8)) 
-
-fit <- lm.rrpp(as.matrix(Atlas_wofossil_noTub_sub[,1:6]) ~ log(SVL_P)+species, SS.type = c("III"), data = Atlas_wofossil_noTub_sub)
+#Permutational Multivariate Analysis of Variance
+fit <- lm.rrpp(as.matrix(Atlas_wofossil_noTub_sub[,1:6]) ~ log(SVL_P)*species, SS.type = c("III"), data = Atlas_wofossil_noTub_sub)
 anova(fit)
 
 plot(fit, type = "PC", pch = 19, col = Atlas_wofossil_noTub_sub$species) # with added par arguments
@@ -141,16 +138,10 @@ plot(fit, type = "regression", reg.type = "PredLine",
 
 #pairwise comparisons between group
 PWT <- pairwise(fit, covariate = log(Atlas_wofossil_noTub_sub$SVL_P), groups = interaction(Atlas_wofossil_noTub_sub$species))
-summary(PWT, test.type = "dist", confidence = 0.95, stat.table = FALSE)
-?pairwise
+t<- summary(PWT, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+t<-t$pairwise.tables$P
+#write.table(t, file = "NEW Atlas linear PWMAN", sep = ",", quote = FALSE, row.names = T)
 
-#pairwise comparisons between group levels with corrections for multiple testing
-set.seed(123)
-ppMANOVA<-pairwise.perm.manova(Atlas_wofossil_noTub_sub[,1:6],Atlas_wofossil_noTub_sub$species,nperm=50, progress = FALSE) #needs more permutation but takes a long time
-ppEMANOVA <- pairwise.perm.manova(dist(Atlas_wofossil_noTub_sub[,1:6],"euclidean"),Atlas_wofossil_noTub_sub$species,nperm=999)
-# t <- ppMANOVA$p.value
-# t <-round(t, digits = 3)
-# write.table(t, file = "Atlas linear PWMAN", sep = ",", quote = FALSE, row.names = T)
 
 
 # TUBERCULUM INTERGLENOIDEUM Permutational ANOVA #---------------------------------
@@ -159,17 +150,18 @@ Tub_dat$species <- factor(Tub_dat$species, levels =
                                              c("A.gracile","A.talpoideum", "A.maculatum", "A.macrodactylum","A.opacum","A.jeffersonianum","A.laterale",
                                                "A.mabeei","A.texanum","A.annulatum","A.tigrinum","A.mavortium", "A.velasci")) # Reorder species levels
 
-set.seed(123)
-perm.anova(Tub_dat$tub_interglen_extension ~ Tub_dat$species, nperm=1000)
-#pairwise comparisons between group levels with corrections for multiple testing
-library(rcompanion)
-pairwisePermutationTest(tub_interglen_extension ~ species, data = Tub_dat, method = "fdr")
+#Permutational Multivariate Analysis of Variance
+fit1 <- lm.rrpp(as.matrix(Tub_dat$tub_interglen_extension) ~ log(SVL_P)*species, SS.type = c("III"), data = Tub_dat)
+anova(fit1)
 
-t <-pairwise.perm.t.test(Tub_dat$tub_interglen_extension,Tub_dat$species,nperm=999,progress = FALSE)
 
-# t <- t$p.value
-# t <- round(t, 3)
-# write.table(t, file = "TubInterglen PW", sep = ",", quote = FALSE, row.names = T)
+
+#pairwise comparisons between group
+PWT1 <- pairwise(fit1, covariate = log(Tub_dat$SVL_P), groups = interaction(Tub_dat$species))
+t<- summary(PWT, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+t<-t$pairwise.tables$P
+#write.table(t, file = "NEW TubInterglen PW", sep = ",", quote = FALSE, row.names = T)
+
 
 
 

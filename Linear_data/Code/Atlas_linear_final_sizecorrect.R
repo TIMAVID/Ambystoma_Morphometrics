@@ -131,6 +131,7 @@ ggplot(total, aes(Gms, Atlas_wofossil_noTub[,2], color=species)) +
 Atlas.pca <- prcomp(Atlas_wofossil_noTub[c(1:6)], center = TRUE, scale = FALSE) # PCA
 PC_scores <- as.data.frame(Atlas.pca$x)
 PC_scores <- cbind(PC_scores, species= species)
+atlasloadings <- data.frame(Variables = rownames(Atlas.pca$rotation), Atlas.pca$rotation)# Extract loadings of the variables
 
 percentage <- round(Atlas.pca$sdev^2 / sum(Atlas.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage <- paste( colnames(PC_scores), "(", paste( as.character(percentage), "%", ")", sep="") )
@@ -150,10 +151,13 @@ speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
 library(ggforce)
-p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
-  #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
-  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + 
+p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species)) + 
+  geom_segment(data = atlasloadings, aes(x = 0, y = 0, xend = (.83*PC1),
+                                      yend = (.8*PC2)), arrow = arrow(length = unit(1/2, "picas")),
+               color = "black") +annotate("text", x = (atlasloadings$PC1), y = (atlasloadings$PC2),
+                                          label = atlasloadings$Variables) +
+  geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) + coord_fixed()+
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + theme(legend.position = "none")+ 
   scale_color_manual(name = "Species", breaks=levels(All_PC_scores$species), values=c(speciescolors))
 p
 
@@ -347,6 +351,40 @@ y_pred_clade
 write.table(y_pred_clade, file = "size corrected Atlas fossil RFclades", sep = ",", quote = FALSE, row.names = T)
 
 
+# MEASUREMENT RELATIVE IMPORTANCE BASED ON RF #---------------------------------
 
+library(tidyverse)
+library(skimr)
+library(knitr)
+library(party)
+library(GGally)
+ggpairs(Atlas_wofossil_noTub_sub_clade[,1:6])
+
+rf3 <- cforest(
+  clades ~ .,
+  data = Atlas_wofossil_noTub_sub_clade,
+  control = cforest_unbiased(mtry = 2, ntree = 500)
+)
+
+create_crfplot <- function(rf, conditional = TRUE){
+  
+  imp <- rf %>%
+    varimp(conditional = conditional) %>% 
+    as_tibble() %>% 
+    rownames_to_column("Feature") %>% 
+    rename(Importance = value)
+  
+  p <- ggplot(imp, aes(x = reorder(Feature, Importance), y = Importance)) +
+    geom_bar(stat = "identity", fill = "#53cfff", width = 0.65) +
+    coord_flip() + 
+    theme_light(base_size = 20) +
+    theme(axis.title.x = element_text(size = 15, color = "black"),
+          axis.title.y = element_blank(),
+          axis.text.x  = element_text(size = 15, color = "black"),
+          axis.text.y  = element_text(size = 15, color = "black")) + theme_classic()
+  return(p)
+}
+
+create_crfplot(rf3, conditional = TRUE)
 
 
