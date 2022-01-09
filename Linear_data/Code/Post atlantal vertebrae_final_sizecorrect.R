@@ -1084,9 +1084,9 @@ print(Atlas.rf_mid)
 rf_acc_mid <- Atlas.rf_mid$confusion
 rf_acc_mid <- 1-rf_acc_mid[,14] # percent correct classification
 rf_acc_mid
-# t <- rf_acc_mid
-# t <-round(t, digits = 2)
-# write.table(t, file = "Middle verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+t <- rf_acc_mid
+t <-round(t, digits = 2)
+write.table(t, file = "size corrected Middle verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_mid$predicted == TrunkMid_sub$species) #overall accuracy
 
@@ -1104,9 +1104,9 @@ print(Atlas.rf_post)
 rf_acc_post <- Atlas.rf_post$confusion
 rf_acc_post <- 1-rf_acc_post[,14] # percent correct classification
 rf_acc_post
-# t <- rf_acc_post
-# t <-round(t, digits = 2)
-# write.table(t, file = "Posterior verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+t <- rf_acc_post
+t <-round(t, digits = 2)
+write.table(t, file = "size corrected Posterior verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_post$predicted == TrunkPost_sub$species) #overall accuracy
 
@@ -1126,7 +1126,7 @@ rf_acc_sc <- 1-rf_acc_sc[,14] # percent correct classification
 rf_acc_sc
 t <- rf_acc_sc
 t <-round(t, digits = 2)
-# write.table(t, file = "Sacral verts RFAC species", sep = ",", quote = FALSE, row.names = T)
+write.table(t, file = "size corrected Sacral verts RFAC species", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf_sc$predicted == TrunkSc_sub$species) #overall accuracy
 

@@ -73,12 +73,15 @@ speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
 library(ggforce)
-p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+q<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + 
   scale_color_manual(name = "Species", breaks=levels(All_PC_scores$species), values=c(speciescolors))
-p
+q
+
+library(ggfortify)
+autoplot(Atlas.pca, data = Atlas_wofossil_noTub, colour = 'species')
 
 library(factoextra)
 fviz_pca_var(Atlas.pca,
@@ -320,7 +323,7 @@ rf_acc_clades
 mean(Atlas.rf_clades$predicted == Atlas_wofossil_noTub_sub_clade$clades) #overall accuracy
 
 # FOSSIL CLADE CLASSIFICATION #
-y_pred_clade = predict(Atlas.rf_clades, newdata = Atlas_fossil_noTub[,1:6])
+y_pred_clade = predict(Atlas.rf_clades, newdata = Atlas_fossil_noTub[,1:6], type = "prob")
 y_pred_clade
 # write.table(y_pred_clade, file = "Atlas fossil RFclades", sep = ",", quote = FALSE, row.names = T)
 

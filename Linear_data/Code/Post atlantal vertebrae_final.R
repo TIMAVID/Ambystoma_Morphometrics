@@ -100,7 +100,7 @@ T1_4_plot<-ggplot(T1_4.scores,aes(x=PC1,y=PC2,color=species)) +
   #                                       label = T1loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T1_4[1]) + ylab(percentage_T1_4[2]) +
   scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T1 & T4") + theme(legend.position = "none")+coord_fixed()
 T1_4_plot
 
 library(factoextra)
@@ -126,7 +126,7 @@ T8_plot<-ggplot(T8.scores,aes(x=PC1,y=PC2,color=species)) +
   #                                       label = T1loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T8[1]) + ylab(percentage_T8[2]) +
   scale_color_manual(name = "Species", breaks=levels(T8$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T8") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T8") + theme(legend.position = "none")+coord_fixed()
 T8_plot
 
 T8_var_cont<-fviz_pca_var(T8.pca,
@@ -149,7 +149,7 @@ T12_plot<-ggplot(T12.scores,aes(x=PC1,y=PC2,color=species)) +
   #                                       label = T1loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_T12[1]) + ylab(percentage_T12[2]) +
   scale_color_manual(name = "Species", breaks=levels(T12$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("T12") + theme(legend.position = "none")
+  theme_classic() + ggtitle("T12") + theme(legend.position = "none")+coord_fixed()
 T12_plot
 
 T12_var_cont<-fviz_pca_var(T12.pca,
@@ -173,7 +173,7 @@ SC_plot<-ggplot(SC.scores,aes(x=PC1,y=PC2,color=species)) +
   #                                       label = T1loadings$Variables) +
   geom_point(size =2)+ xlab(percentage_SC[1]) + ylab(percentage_SC[2]) +
   scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors)) + 
-  theme_classic() + ggtitle("SC") + theme(legend.position = "none")
+  theme_classic() + ggtitle("SC") + theme(legend.position = "none")+coord_fixed()
 SC_plot
 
 Sc_var_cont<-fviz_pca_var(Sc.pca,
@@ -1626,15 +1626,15 @@ library(class)
 KnnAntPrediction <- knn(TrunkAnt_sub[,1:7], TrunkFossilAnt[,1:7],
                         TrunkAnt_sub$clades, k=6 , prob=TRUE)
 KnnAntPrediction
-# t <- data.frame(fossil = TrunkFossilAnt$species, class = KnnAntPrediction)
-# 
-# write.table(t, file = "KnnAntPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
+t <- data.frame(fossil = TrunkFossilAnt$species, class = KnnAntPrediction)
 
-# t <- cbind(as.character(TrunkFossilAnt$clades), as.character(KnnAntPrediction_k7), as.character(attr(KnnAntPrediction_k7, 'prob')))
-# t <- as.data.frame(t)
-# t$V3<- as.numeric(t$V3)
-# t$V3 <- round(t$V3, 2)
-# write.table(t, file = "Anterior fossils.txt", sep = ",", quote = FALSE, row.names = T)
+#write.table(t, file = "KnnAntPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
+
+t <- cbind(as.character(TrunkFossilAnt$species), as.character(KnnAntPrediction), as.character(attr(KnnAntPrediction, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "probs Anterior fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # MIDDLE FOSSILS #
@@ -1644,6 +1644,11 @@ KnnMidPrediction
 # t <- data.frame(fossil = TrunkFossilT8$species, class = KnnMidPrediction)
 # 
 # write.table(t, file = "KnnMidPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
+t <- cbind(as.character(TrunkFossilT8$species), as.character(KnnMidPrediction), as.character(attr(KnnMidPrediction, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "probs middle fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # POSTERIOR FOSSILS #
@@ -1653,6 +1658,11 @@ KnnPostPrediction
 # t <- data.frame(fossil = TrunkFossilT12$species, class = KnnPostPrediction)
 # 
 # write.table(t, file = "KnnPostPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
+t <- cbind(as.character(TrunkFossilT12$species), as.character(KnnPostPrediction), as.character(attr(KnnPostPrediction, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "probs posterior fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 # SACRAL VERTEBRAE FOSSILS #
@@ -1662,6 +1672,11 @@ KnnSCPrediction
 # t <- data.frame(fossil = TrunkFossilSc$species, class = KnnSCPrediction)
 # 
 # write.table(t, file = "KnnSCPrediction clade fossils.txt", sep = ",", quote = FALSE, row.names = T)
+t <- cbind(as.character(TrunkFossilSc$species), as.character(KnnSCPrediction), as.character(attr(KnnSCPrediction, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "probs sacral fossils.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1687,9 +1702,9 @@ rf_acc_ant_clade
 mean(Atlas.rf_ant_clade$predicted == TrunkAnt_sub$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
-y_pred_ant_clade = predict(Atlas.rf_ant_clade, newdata = TrunkFossilAnt[,1:7])
+y_pred_ant_clade = predict(Atlas.rf_ant_clade, newdata = TrunkFossilAnt[,1:7], type = "prob")
 y_pred_ant_clade
-# write.table(y_pred_ant_clade, file = "ant clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_ant_clade, file = "prob ant clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1709,9 +1724,9 @@ rf_acc_mid_clade
 mean(Atlas.rf_mid_clade$predicted == TrunkMid_sub$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
-y_pred_mid_clade = predict(Atlas.rf_mid_clade, newdata = TrunkFossilT8[,1:7])
+y_pred_mid_clade = predict(Atlas.rf_mid_clade, newdata = TrunkFossilT8[,1:7], type = "prob")
 y_pred_mid_clade
-# write.table(y_pred_mid_clade, file = "middle clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_mid_clade, file = "prob middle clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1731,9 +1746,9 @@ rf_acc_post_clade
 mean(Atlas.rf_post_clade$predicted == TrunkPost_sub$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
-y_pred_post_clade = predict(Atlas.rf_post_clade, newdata = TrunkFossilT12[,1:7])
+y_pred_post_clade = predict(Atlas.rf_post_clade, newdata = TrunkFossilT12[,1:7], type = "prob")
 y_pred_post_clade
-# write.table(y_pred_post_clade, file = "post clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_post_clade, file = "probs post clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -1753,9 +1768,9 @@ rf_acc_sc_clade
 mean(Atlas.rf_sc_clade$predicted == TrunkSc_sub$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
-y_pred_sc_clade = predict(Atlas.rf_sc_clade, newdata = TrunkFossilSc[,1:7])
+y_pred_sc_clade = predict(Atlas.rf_sc_clade, newdata = TrunkFossilSc[,1:7], type = "prob")
 y_pred_sc_clade
-# write.table(y_pred_sc_clade, file = "sc clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_sc_clade, file = "probs sc clade fossils RF.txt", sep = ",", quote = FALSE, row.names = T)
 
 
 

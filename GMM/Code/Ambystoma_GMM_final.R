@@ -286,7 +286,7 @@ library(ggplot2)
 library(ggforce)
 p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) +
+  geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) + coord_fixed(ratio = 1)+
   scale_color_manual(name = "Species", breaks=levels(GMM_data_noFossil$species),  values=c(speciescolors, "#000000", "#000000", "#000000", "#000000", "#000000")) +
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic()
 p
@@ -396,7 +396,7 @@ library(class)
 KnnTestPrediction_k3 <- knn(Atlas_PC_scores[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores$species, k=3, prob=TRUE)
 KnnTestPrediction_k3
-write.table(KnnTestPrediction_k3, file = "GMM fossil KNN", sep = ",", quote = FALSE, row.names = T)
+write.table(KnnTestPrediction_k3, file = "prob GMM fossil KNN", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -475,7 +475,14 @@ accKNN_clades
 KnnTestPrediction_k8 <- knn(Atlas_PC_scores_clade[,1:16], Fossil_PC_scores2,
                             Atlas_PC_scores_clade$clades, k=8, prob=TRUE)
 KnnTestPrediction_k8
-# write.table(KnnTestPrediction_k8, file = "GMM fossil KNNclade", sep = ",", quote = FALSE, row.names = T)
+
+t <- data.frame(fossil = rownames(Fossil_PC_scores2), class = KnnTestPrediction_k8)
+
+t <- cbind(as.character(rownames(Fossil_PC_scores2)), as.character(KnnTestPrediction_k8), as.character(attr(KnnTestPrediction_k8, 'prob')))
+t <- as.data.frame(t)
+t$V3<- as.numeric(t$V3)
+t$V3 <- round(t$V3, 2)
+write.table(t, file = "prob GMM fossil KNNclade", sep = ",", quote = FALSE, row.names = T)
 
 
 
@@ -496,9 +503,9 @@ t <-round(t, digits = 2)
 mean(Atlas.rf_clades$predicted == Atlas_PC_scores_clade$clades) #overall accuracy
 
 # FOSSIL CLASSIFICATION #
-y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16])
+y_pred_clade = predict(Atlas.rf_clades, newdata = Fossil_PC_scores2[,1:16], type = "prob")
 y_pred_clade
-# write.table(y_pred_clade, file = "GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
+write.table(y_pred_clade, file = "prob GMM fossil RFclade", sep = ",", quote = FALSE, row.names = T)
 
 
 

@@ -207,16 +207,16 @@ set.seed(123)
 
 runs <- 100
 
-system.time({
-  fish <- foreach(icount(runs)) %dopar% {
-    train(species~ .,
-          method     = "knn",
-          tuneGrid   = expand.grid(k = 1:17),
-          trControl  = trainControl(method  = "LOOCV"),
-          metric     = "Accuracy",
-          data       = Atlas_wofossil_noTub_sub)$results
-  }
-})
+# system.time({
+#   fish <- foreach(icount(runs)) %dopar% {
+#     train(species~ .,
+#           method     = "knn",
+#           tuneGrid   = expand.grid(k = 1:17),
+#           trControl  = trainControl(method  = "LOOCV"),
+#           metric     = "Accuracy",
+#           data       = Atlas_wofossil_noTub_sub)$results
+#   }
+# })
 
 fish <- map_dfr(fish,`[`, c("k", "Accuracy", "Kappa"))
 kspecies <- fish %>% 
@@ -263,7 +263,7 @@ rf_acc <- 1-rf_acc[,14] # percent correct classification
 rf_acc
 t <- rf_acc
 t <-round(t, digits = 2)
-write.table(t, file = "size corrected Atlas linear RFAC", sep = ",", quote = FALSE, row.names = T)
+write.table(t, file = "size corrected Atlas linear species RFAC", sep = ",", quote = FALSE, row.names = T)
 
 mean(Atlas.rf$predicted == Atlas_wofossil_noTub_sub$species) #overall accuracy
 
@@ -346,7 +346,7 @@ write.table(t, file = "size corrected Atlas linear RFACclades", sep = ",", quote
 mean(Atlas.rf_clades$predicted == Atlas_wofossil_noTub_sub_clade$clades) #overall accuracy
 
 # FOSSIL CLADE CLASSIFICATION #
-y_pred_clade = predict(Atlas.rf_clades, newdata = Atlas_fossil_noTub[,1:6])
+y_pred_clade = predict(Atlas.rf_clades, newdata = Atlas_fossil_noTub[,1:6],type="prob")
 y_pred_clade
 write.table(y_pred_clade, file = "size corrected Atlas fossil RFclades", sep = ",", quote = FALSE, row.names = T)
 
