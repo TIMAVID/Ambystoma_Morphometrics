@@ -151,11 +151,11 @@ speciesshapes <- c(rep(16,15), rep(18,30))
 
 library(ggplot2)
 library(ggforce)
-p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species)) + 
-  geom_segment(data = atlasloadings, aes(x = 0, y = 0, xend = (.83*PC1),
-                                      yend = (.8*PC2)), arrow = arrow(length = unit(1/2, "picas")),
-               color = "black") +annotate("text", x = (atlasloadings$PC1), y = (atlasloadings$PC2),
-                                          label = atlasloadings$Variables) +
+p<-ggplot(All_PC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
+  # geom_segment(data = atlasloadings, aes(x = 0, y = 0, xend = (.83*PC1),
+  #                                     yend = (.8*PC2)), arrow = arrow(length = unit(1/2, "picas")),
+  #              color = "black") +annotate("text", x = (atlasloadings$PC1), y = (atlasloadings$PC2),
+  #                                         label = atlasloadings$Variables) +
   geom_point(size =3)+ xlab(percentage[1]) + ylab(percentage[2]) + coord_fixed()+
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + theme(legend.position = "none")+ 
   scale_color_manual(name = "Species", breaks=levels(All_PC_scores$species), values=c(speciescolors))

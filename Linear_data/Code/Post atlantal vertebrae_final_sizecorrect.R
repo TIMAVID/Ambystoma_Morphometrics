@@ -697,8 +697,8 @@ All_AntPC_scores <- (rbind(Antscores, FossilAnt_PC_scores)) # create a new dataf
 
 # PLOT #
 
-fossilcolors <- grDevices::gray.colors(54, start = 0, end = 0)
-speciesshapes <- c(15, 17, 18)
+fossilcolors <- grDevices::gray.colors(200, start = 0, end = 0)
+speciesshapes <- c(rep(16,15), rep(18,50))
 
 library(ggplot2)
 library(ggforce)
@@ -706,11 +706,11 @@ library(ggforce)
 percentage_ant <- round(TrunkAnt.pca$sdev^2 / sum(TrunkAnt.pca$sdev^2) * 100, 2)# find percentage variance explained by PC's
 percentage_ant <- paste( colnames(Antscores), "(", paste( as.character(percentage_ant), "%", ")", sep="") )
 
-Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = position)) + 
+Ant_plot<-ggplot(All_AntPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =2)+ xlab(percentage_ant[1]) + ylab(percentage_ant[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkAnt$species), values=c(speciescolors, fossilcolors)) + 
-  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Anterior Vertebrae") #+ theme(legend.position = "none")
+  geom_point(size =2)+ xlab(percentage_ant[1]) + ylab(percentage_ant[2]) + coord_fixed()+
+  scale_color_manual(name = "Species", breaks=levels(All_AntPC_scores$species), values=c(speciescolors, fossilcolors)) + 
+  scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Anterior Vertebrae") + theme(legend.position = "none")
 Ant_plot
 
 
@@ -733,8 +733,8 @@ percentage_mid <- paste( colnames(MIDscores), "(", paste( as.character(percentag
 # PLOT #
 Mid_plot<-ggplot(All_MIDPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =2)+ xlab(percentage_mid[1]) + ylab(percentage_mid[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkMid$species), values=c(speciescolors, fossilcolors)) + 
+  geom_point(size =2)+ xlab(percentage_mid[1]) + ylab(percentage_mid[2]) +coord_fixed()+
+  scale_color_manual(name = "Species", breaks=levels(All_MIDPC_scores$species), values=c(speciescolors, fossilcolors)) + 
   scale_shape_manual(values = c(speciesshapes), guide = 'none') +theme_classic() + ggtitle("Middle Vertebrae")+ theme(legend.position = "none")
 Mid_plot
 
@@ -758,8 +758,8 @@ percentage_post <- paste( colnames(POSTscores), "(", paste( as.character(percent
 # PLOT #
 Post_plot<-ggplot(All_POSTPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =2)+ xlab(percentage_post[1]) + ylab(percentage_post[2]) +
-  scale_color_manual(name = "Species", breaks=levels(TrunkPost$species), values=c(speciescolors, fossilcolors)) + 
+  geom_point(size =2)+ xlab(percentage_post[1]) + ylab(percentage_post[2]) +coord_fixed()+
+  scale_color_manual(name = "Species", breaks=levels(All_POSTPC_scores$species), values=c(speciescolors, fossilcolors)) + 
   scale_shape_manual(values = c(speciesshapes), guide = 'none') + theme_classic() + ggtitle("Posterior Vertebrae")+ theme(legend.position = "none")
 Post_plot
 
@@ -784,8 +784,8 @@ percentage_Sc <- paste( colnames(SCscores), "(", paste( as.character(percentage_
 # PLOT #
 Sc_plot<-ggplot(All_SCPC_scores,aes(x=PC1,y=PC2,color=species, shape = species)) + 
   #geom_mark_hull(concavity = 5,expand=0,radius=0,aes(color=species), size = 1) +
-  geom_point(size =2)+ xlab(percentage_Sc[1]) + ylab(percentage_Sc[2]) +
-  scale_color_manual(name = "Species", breaks=levels(Sc$species), values=c(speciescolors, fossilcolors)) + 
+  geom_point(size =2)+ xlab(percentage_Sc[1]) + ylab(percentage_Sc[2]) +coord_fixed()+
+  scale_color_manual(name = "Species", breaks=levels(All_SCPC_scores$species), values=c(speciescolors, fossilcolors)) + 
   scale_shape_manual(values = c(speciesshapes), guide = 'none') +theme_classic() + ggtitle("Sacral Vertebrae")+ theme(legend.position = "none")
 Sc_plot
 
